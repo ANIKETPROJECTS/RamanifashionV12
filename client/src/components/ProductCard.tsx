@@ -221,12 +221,12 @@ export default function ProductCard({
   
   return (
     <Card 
-      className="overflow-hidden cursor-pointer hover-elevate active-elevate-2 group flex flex-col h-full"
+      className="overflow-hidden cursor-pointer hover-elevate active-elevate-2 group flex flex-col h-[300px] md:h-[360px]"
       onClick={() => onClick ? onClick() : setLocation(`/product/${productDetailId}`)}
       onMouseEnter={() => prefetchProduct(productDetailId)}
       data-testid={testId}
     >
-      <div className="relative aspect-square overflow-hidden flex-shrink-0">
+      <div className="relative h-[70%] overflow-hidden flex-shrink-0">
         <img
           src={currentImage || "/default-saree.jpg"}
           alt={name}
@@ -254,11 +254,12 @@ export default function ProductCard({
           </div>
         )}
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2">
+        <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1.5">
           <Button 
             className="w-full bg-primary hover:bg-primary text-primary-foreground"
             onClick={handleAddToCart}
             data-testid={`button-add-to-cart-${id}`}
+            size="sm"
           >
             <ShoppingBag className="h-4 w-4 mr-2" />
             Add to Cart
@@ -268,6 +269,7 @@ export default function ProductCard({
             variant="secondary"
             onClick={handleBuyNow}
             data-testid={`button-buy-now-${id}`}
+            size="sm"
           >
             <CreditCard className="h-4 w-4 mr-2" />
             Buy Now
@@ -275,28 +277,22 @@ export default function ProductCard({
         </div>
       </div>
 
-      <CardContent className="p-4 flex flex-col flex-1">
-        <h3 className="font-medium text-sm line-clamp-2 mb-1" data-testid={`text-product-name-${id}`}>
+      <CardContent className="p-2 md:p-3 flex flex-col h-[30%] overflow-hidden">
+        <h3 className="font-medium text-xs md:text-sm line-clamp-2 leading-tight mb-0.5" data-testid={`text-product-name-${id}`}>
           {name}
         </h3>
 
-        {displayColor && (
-          <span className="inline-block text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full mb-1 w-fit" data-testid={`text-color-${id}`}>
-            {displayColor}
-          </span>
-        )}
-
-        <p className="text-xs text-muted-foreground line-clamp-1 mb-2 min-h-[1rem]" data-testid={`text-short-description-${id}`}>
+        <p className="text-xs text-muted-foreground line-clamp-1 mb-0.5 min-h-[14px]" data-testid={`text-short-description-${id}`}>
           {displayShortDescription || ""}
         </p>
 
-        <div className="flex items-center gap-2 flex-wrap mt-auto">
-          <span className="text-lg font-bold text-black" data-testid={`text-price-${id}`}>
+        <div className="flex items-center gap-1.5 flex-wrap mt-auto">
+          <span className="text-sm md:text-base font-bold text-black" data-testid={`text-price-${id}`}>
             ₹{price.toLocaleString()}
           </span>
           {originalPrice && (
             <>
-              <span className="text-sm text-black line-through" data-testid={`text-original-price-${id}`}>
+              <span className="text-xs text-black line-through" data-testid={`text-original-price-${id}`}>
                 ₹{originalPrice.toLocaleString()}
               </span>
               {discount !== undefined && discount > 0 && (

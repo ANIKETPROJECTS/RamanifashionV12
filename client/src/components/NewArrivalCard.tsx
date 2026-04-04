@@ -23,6 +23,8 @@ interface NewArrivalCardProps {
   onClick?: () => void;
   baseProductId?: string;
   displayColor?: string;
+  shortDescription?: string;
+  description?: string;
 }
 
 export default function NewArrivalCard({
@@ -38,12 +40,17 @@ export default function NewArrivalCard({
   onClick,
   baseProductId,
   displayColor,
+  shortDescription,
+  description,
 }: NewArrivalCardProps) {
   const [, setLocation] = useLocation();
   const [currentImage, setCurrentImage] = useState(image);
   const { toast } = useToast();
 
   const cartProductId = baseProductId || id.split('_variant_')[0];
+
+  const displayShortDescription = shortDescription ||
+    (description ? description.split(/[.\n]/).find(s => s.trim())?.trim()?.substring(0, 60) : undefined);
   const token = localStorage.getItem("token");
 
   const { data: wishlistData } = useQuery<any>({
@@ -166,11 +173,11 @@ export default function NewArrivalCard({
 
   return (
     <Card 
-      className="overflow-hidden cursor-pointer hover-elevate active-elevate-2 group w-full flex flex-col"
+      className="overflow-hidden cursor-pointer hover-elevate active-elevate-2 group w-full flex flex-col h-[300px] md:h-[360px]"
       onClick={() => onClick ? onClick() : setLocation(`/product/${id}`)}
       data-testid={`card-new-arrival-${id}`}
     >
-      <div className="relative aspect-[3/4] overflow-hidden bg-gray-100 flex-shrink-0">
+      <div className="relative h-[70%] overflow-hidden bg-gray-100 flex-shrink-0">
         <img
           src={currentImage || placeholderImage}
           alt={name}
@@ -196,8 +203,7 @@ export default function NewArrivalCard({
           NEW
         </Badge>
 
-
-        <div className="absolute bottom-0 left-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2">
+        <div className="absolute bottom-0 left-0 right-0 p-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-1.5">
           <Button 
             className="w-full bg-primary hover:bg-primary text-primary-foreground"
             onClick={handleAddToCart}
@@ -220,24 +226,22 @@ export default function NewArrivalCard({
         </div>
       </div>
 
-      <CardContent className="p-3 flex flex-col flex-1">
-        <h3 className="font-medium text-sm line-clamp-2 mb-1" data-testid={`text-product-name-${id}`}>
+      <CardContent className="p-2 md:p-3 flex flex-col h-[30%] overflow-hidden">
+        <h3 className="font-medium text-xs md:text-sm line-clamp-2 leading-tight mb-0.5" data-testid={`text-product-name-${id}`}>
           {name}
         </h3>
 
-        {displayColor && (
-          <span className="inline-block text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full mb-1 w-fit" data-testid={`text-color-${id}`}>
-            {displayColor}
-          </span>
-        )}
+        <p className="text-xs text-muted-foreground line-clamp-1 mb-0.5 min-h-[14px]" data-testid={`text-short-description-${id}`}>
+          {displayShortDescription || ""}
+        </p>
 
-        <div className="flex items-center gap-2 flex-wrap mt-auto">
-          <span className="text-lg font-bold text-black" data-testid={`text-price-${id}`}>
+        <div className="flex items-center gap-1.5 flex-wrap mt-auto">
+          <span className="text-sm md:text-base font-bold text-black" data-testid={`text-price-${id}`}>
             ₹{price.toLocaleString()}
           </span>
           {originalPrice && (
             <>
-              <span className="text-sm text-black line-through" data-testid={`text-original-price-${id}`}>
+              <span className="text-xs text-black line-through" data-testid={`text-original-price-${id}`}>
                 ₹{originalPrice.toLocaleString()}
               </span>
               {discount !== undefined && discount > 0 && (

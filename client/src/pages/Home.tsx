@@ -639,59 +639,80 @@ export default function Home() {
           </motion.section>
         )}
 
-        <section className="max-w-7xl mx-auto px-4 lg:px-3 py-8 md:py-12">
-          <motion.div
-            className="text-center mb-8 md:mb-12"
-            initial={{ opacity: 0, y: -20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <h2
-              className="text-2xl md:text-3xl font-bold font-serif bg-primary text-white border-2 border-white rounded-full px-6 md:px-8 py-2 md:py-3 inline-block"
-              data-testid="text-section-categories"
+        <motion.section
+          className="py-8 md:py-12"
+          style={{ backgroundColor: "rgba(250, 220, 235, 0.7)" }}
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="max-w-7xl mx-auto px-4 lg:px-3">
+            <motion.div
+              className="flex flex-row items-center justify-between gap-4 mb-6"
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
             >
-              Shop by Category
-            </h2>
-          </motion.div>
-          <motion.div
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8"
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-          >
-            {newCategories.map((category, index) => (
+              <div className="text-center sm:text-left flex-1">
+                <h2
+                  className="text-2xl md:text-3xl font-bold font-serif bg-primary text-white border-2 border-white rounded-full px-6 md:px-8 py-2 md:py-3 inline-block"
+                  data-testid="text-section-categories"
+                >
+                  Shop by Category
+                </h2>
+              </div>
+            </motion.div>
+            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
               <motion.div
-                key={category.name}
-                className="flex flex-col items-center group cursor-pointer"
-                variants={fadeInUp}
-                transition={{ duration: 0.5 }}
-                onClick={() => {
-                  if (category.name === "Sale") {
-                    setLocation("/sale");
-                  } else {
-                    setLocation(
-                      `/products?category=${encodeURIComponent(category.name)}`,
-                    );
-                  }
-                }}
-                data-testid={`category-card-${category.name.toLowerCase().replace(/\s+/g, "-")}`}
+                className="flex items-stretch gap-4 pb-4"
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
               >
-                <div className="w-full aspect-[2/3] overflow-hidden rounded-lg mb-3 md:mb-4 shadow-md hover:shadow-xl transition-shadow duration-300">
-                  <img
-                    src={category.image}
-                    alt={category.name}
-                    className="hidden w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <h3 className="text-center text-xs md:text-base lg:text-lg font-bold font-serif bg-primary text-white border-2 border-white rounded-full px-3 md:px-6 py-1.5 md:py-2 inline-block">
-                  {category.name}
-                </h3>
+                {newCategories.map((category, index) => (
+                  <motion.div
+                    key={category.name}
+                    variants={fadeInUp}
+                    transition={{ duration: 0.5 }}
+                    className="flex flex-col w-[160px] md:w-[200px] flex-shrink-0"
+                    onClick={() => {
+                      if (category.name === "Sale") {
+                        setLocation("/sale");
+                      } else {
+                        setLocation(
+                          `/products?category=${encodeURIComponent(category.name)}`,
+                        );
+                      }
+                    }}
+                    data-testid={`category-card-${category.name.toLowerCase().replace(/\s+/g, "-")}`}
+                  >
+                    <div className="overflow-hidden rounded-lg cursor-pointer hover-elevate group h-[300px] md:h-[360px] flex flex-col bg-white shadow">
+                      <div className="h-[70%] overflow-hidden flex-shrink-0">
+                        {category.image ? (
+                          <img
+                            src={category.image}
+                            alt={category.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-pink-100 to-pink-300" />
+                        )}
+                      </div>
+                      <div className="h-[30%] flex items-center justify-center p-2">
+                        <h3 className="text-center text-xs md:text-sm font-bold font-serif text-primary line-clamp-2 leading-tight">
+                          {category.name}
+                        </h3>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </motion.div>
-            ))}
-          </motion.div>
-        </section>
+            </div>
+          </div>
+        </motion.section>
 
         <motion.section
           className="py-8 md:py-16"

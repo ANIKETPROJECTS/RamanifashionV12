@@ -7,7 +7,7 @@ const TEMPLATE_IDS = {
   orderConfirmation:    '1707177503979503746',
   paymentFailure:       '1707177503988898043',
   orderAccepted:        '1707177503995349512',
-  orderCancellation:    '1707177503995349512',
+  orderCancellation:    '1707177504012730703',
   orderShipped:         '1707177504025926345',
   orderDelivered:       '1707177504037044153',
 };
