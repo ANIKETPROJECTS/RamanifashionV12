@@ -1,0 +1,23 @@
+Sample API Call for Testing
+
+1. Login OTP
+http://135.181.19.87/Login/V2/apikey.php?apikey=EmjkjMNYrouCuA1i&senderid=RAMFA&templateid=1707177503961928847&number=919372494513,918687488888&message=Ramani Fashion: Your Login OTP is <API TESTING>. Valid for 10 minutes. Do not share this code with anyone.
+
+2. Order Confirmation with payment success
+http://135.181.19.87/Login/V2/apikey.php?apikey=EmjkjMNYrouCuA1i&senderid=RAMFA&templateid=1707177503979503746&number=919372494513,918687488888&message=Ramani Fashion: Order %23<API TESTING> confirmed and payment received successfully. Thank you for shopping with us!
+
+3. Payment failure
+http://135.181.19.87/Login/V2/apikey.php?apikey=EmjkjMNYrouCuA1i&senderid=RAMFA&templateid=1707177503988898043&number=919372494513,918687488888&message=Ramani Fashion: Payment for Order %23<API TESTING> was unsuccessful. Please retry to complete your purchase.
+
+4. Order Accepted
+http://135.181.19.87/Login/V2/apikey.php?apikey=EmjkjMNYrouCuA1i&senderid=RAMFA&templateid=1707177503995349512&number=919372494513,918687488888&message=Ramani Fashion: Your order %23<API TESTING> has been accepted and is now being processed. We’ll keep you updated.
+
+5. Order Cancellation
+http://135.181.19.87/Login/V2/apikey.php?apikey=EmjkjMNYrouCuA1i&senderid=RAMFA&templateid=1707177503995349512&number=919372494513,918687488888&message=Ramani Fashion: Your order %23<API TESTING> has been accepted and is now being processed. We’ll keep you updated.
+
+6. Order Shipped
+http://135.181.19.87/Login/V2/apikey.php?apikey=EmjkjMNYrouCuA1i&senderid=RAMFA&templateid=1707177504025926345&number=919372494513,918687488888&message=Ramani Fashion: Order %23<API TESTING> has been shipped. Track your delivery as it moves to you.
+
+7. Order Delivered Confirmation / Order completed
+http://135.181.19.87/Login/V2/apikey.php?apikey=EmjkjMNYrouCuA1i&senderid=RAMFA&templateid=1707177504037044153&number=919372494513,918687488888&message=Ramani Fashion: Order %23<API TESTING> has been delivered successfully. Thank you for choosing Ramani Fashion!
+
