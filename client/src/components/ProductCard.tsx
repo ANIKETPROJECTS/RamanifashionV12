@@ -1,6 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Heart, ShoppingBag, Star, CreditCard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
@@ -247,10 +246,8 @@ export default function ProductCard({
         </div>
 
         {isBestseller && (
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
-            <Badge className="bg-accent text-accent-foreground" data-testid={`badge-bestseller-${id}`}>
-              Bestseller
-            </Badge>
+          <div className="absolute top-2 left-2">
+            <Star className="h-6 w-6 fill-yellow-400 text-yellow-400 drop-shadow" data-testid={`icon-bestseller-${id}`} />
           </div>
         )}
 

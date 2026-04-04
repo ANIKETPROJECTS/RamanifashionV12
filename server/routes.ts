@@ -193,10 +193,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const subs: any[] = Array.isArray(category.subCategories) ? [...category.subCategories] : [];
         const idx = subs.findIndex((s: any) => s.slug === req.params.subSlug);
         if (idx === -1) return res.status(404).json({ error: "Subcategory not found" });
-        const { name } = req.body;
+        const { name, description } = req.body;
         if (name) {
           subs[idx].name = name;
           subs[idx].slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+        }
+        if (description !== undefined) {
+          subs[idx].description = description;
         }
         if (req.file) {
           subs[idx].image = await uploadToCloudinary(req.file.buffer, req.file.originalname);

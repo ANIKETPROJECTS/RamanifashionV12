@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Upload, X, ChevronDown, ChevronRight, ImageIcon } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,7 @@ interface SubCategory {
   name: string;
   slug: string;
   image: string;
+  description?: string;
   subCategories: SubCategory[];
 }
 
@@ -62,6 +64,7 @@ export default function CategoryManagement() {
 
   const [editSubDialog, setEditSubDialog] = useState<{ category: Category; sub: SubCategory } | null>(null);
   const [editSubName, setEditSubName] = useState("");
+  const [editSubDescription, setEditSubDescription] = useState("");
   const [editSubImageFile, setEditSubImageFile] = useState<File | null>(null);
   const [editSubImagePreview, setEditSubImagePreview] = useState<string | null>(null);
 
@@ -137,9 +140,10 @@ export default function CategoryManagement() {
   });
 
   const editSubcategoryMutation = useMutation({
-    mutationFn: async ({ id, subSlug, name, file }: { id: string; subSlug: string; name: string; file?: File }) => {
+    mutationFn: async ({ id, subSlug, name, description, file }: { id: string; subSlug: string; name: string; description?: string; file?: File }) => {
       const form = new FormData();
       form.append("name", name);
+      if (description !== undefined) form.append("description", description);
       if (file) form.append("image", file);
       const res = await fetch(`/api/admin/categories/${id}/subcategories/${subSlug}`, {
         method: "PUT",
@@ -156,6 +160,7 @@ export default function CategoryManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       setEditSubDialog(null);
       setEditSubName("");
+      setEditSubDescription("");
       setEditSubImageFile(null);
       setEditSubImagePreview(null);
       toast({ title: "Subcategory updated successfully!" });
@@ -223,6 +228,7 @@ export default function CategoryManagement() {
   const openEditSubDialog = (category: Category, sub: SubCategory) => {
     setEditSubDialog({ category, sub });
     setEditSubName(sub.name);
+    setEditSubDescription(sub.description || "");
     setEditSubImageFile(null);
     setEditSubImagePreview(null);
   };
@@ -485,7 +491,7 @@ export default function CategoryManagement() {
       </Dialog>
 
       {/* Edit Subcategory Dialog */}
-      <Dialog open={!!editSubDialog} onOpenChange={(open) => { if (!open) { setEditSubDialog(null); setEditSubName(""); setEditSubImageFile(null); setEditSubImagePreview(null); } }}>
+      <Dialog open={!!editSubDialog} onOpenChange={(open) => { if (!open) { setEditSubDialog(null); setEditSubName(""); setEditSubDescription(""); setEditSubImageFile(null); setEditSubImagePreview(null); } }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Subcategory</DialogTitle>
@@ -500,6 +506,17 @@ export default function CategoryManagement() {
                   value={editSubName}
                   onChange={(e) => setEditSubName(e.target.value)}
                   data-testid="input-edit-sub-name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-sub-description">Description</Label>
+                <Textarea
+                  id="edit-sub-description"
+                  placeholder="Short description shown on the products page..."
+                  value={editSubDescription}
+                  onChange={(e) => setEditSubDescription(e.target.value)}
+                  rows={3}
+                  data-testid="textarea-edit-sub-description"
                 />
               </div>
               <div className="space-y-2">
@@ -531,7 +548,7 @@ export default function CategoryManagement() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setEditSubDialog(null); setEditSubName(""); setEditSubImageFile(null); setEditSubImagePreview(null); }}>
+            <Button variant="outline" onClick={() => { setEditSubDialog(null); setEditSubName(""); setEditSubDescription(""); setEditSubImageFile(null); setEditSubImagePreview(null); }}>
               Cancel
             </Button>
             <Button
@@ -543,6 +560,7 @@ export default function CategoryManagement() {
                     id: editSubDialog.category._id,
                     subSlug: editSubDialog.sub.slug,
                     name: editSubName.trim(),
+                    description: editSubDescription,
                     file: editSubImageFile || undefined,
                   });
                 }

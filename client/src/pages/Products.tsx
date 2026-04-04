@@ -21,6 +21,7 @@ interface ApiSubCategory {
   name: string;
   slug: string;
   image: string;
+  description?: string;
   subCategories: ApiSubCategory[];
 }
 
@@ -72,6 +73,16 @@ export default function Products() {
     }
     return null;
   }, [apiCategories, mainCategoryParam, selectedCategories]);
+
+  // Find the active single subcategory object (for description banner)
+  const activeSubcategory = useMemo((): ApiSubCategory | null => {
+    if (!apiCategories || selectedCategories.length !== 1) return null;
+    for (const cat of apiCategories) {
+      const found = cat.subCategories.find((s) => s.name === selectedCategories[0]);
+      if (found) return found;
+    }
+    return null;
+  }, [apiCategories, selectedCategories]);
 
   // Subcategories to show in the filter sidebar
   const filterableSubcategories = useMemo(() => {
@@ -323,6 +334,12 @@ export default function Products() {
             )}
           </nav>
           
+          {activeSubcategory?.description && (
+            <div className="mb-4 px-4 py-3 rounded-xl bg-primary/10 border border-primary/20 text-sm text-foreground leading-relaxed" data-testid="text-subcategory-description">
+              {activeSubcategory.description}
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
               <h1 className="text-2xl font-bold mb-1" data-testid="text-page-title">
