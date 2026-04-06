@@ -34,7 +34,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
-import { FaInstagram, FaWhatsapp, FaFacebook } from "react-icons/fa";
+import { FaInstagram, FaFacebook } from "react-icons/fa";
+import whatsappIconImg from "@assets/apple_(1)_1775471745535.png";
 
 import bridalImage from "@assets/generated_images/Bridal_saree_product_shot_3a9642d4.png";
 import cottonImage from "@assets/generated_images/Cotton_saree_product_3295c949.png";
@@ -1280,7 +1281,7 @@ export default function Home() {
                           data-testid="link-whatsapp"
                           aria-label="WhatsApp"
                         >
-                          <FaWhatsapp className="w-5 h-5" />
+                          <img src={whatsappIconImg} alt="WhatsApp" className="w-5 h-5 object-contain" />
                           <span className="text-sm font-medium">WhatsApp</span>
                         </a>
                       </div>
@@ -1299,11 +1300,11 @@ export default function Home() {
         href="https://chat.whatsapp.com/GqIsU9ZF2SJ9buuSKxGFWB"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white rounded-full p-4 shadow-lg hover:shadow-xl transition-all z-40 flex items-center justify-center"
+        className="fixed bottom-6 right-6 rounded-full shadow-lg hover:shadow-xl transition-all z-40 flex items-center justify-center"
         data-testid="button-whatsapp-floating"
         aria-label="Chat on WhatsApp"
       >
-        <FaWhatsapp className="w-6 h-6" />
+        <img src={whatsappIconImg} alt="Chat on WhatsApp" className="w-14 h-14 object-contain" />
       </a>
 
       <Dialog

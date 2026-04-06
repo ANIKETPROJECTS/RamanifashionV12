@@ -291,6 +291,15 @@ export default function ProductDetail() {
   const currentColorVariant =
     colorVariants && colorVariants[selectedColorIndex];
 
+  const displayStockQty = currentColorVariant
+    ? (currentColorVariant.stockQuantity ?? 0)
+    : (product.stockQuantity ?? 0);
+  const displayInStock = currentColorVariant
+    ? (currentColorVariant.inStock !== undefined
+        ? currentColorVariant.inStock
+        : (currentColorVariant.stockQuantity ?? 0) > 0)
+    : product.inStock;
+
   const images =
     currentColorVariant &&
     currentColorVariant.images &&
@@ -478,21 +487,21 @@ export default function ProductDetail() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setQuantity((q) => Math.min(q + 1, product.stockQuantity || 1))}
-                  disabled={quantity >= (product.stockQuantity || 1)}
+                  onClick={() => setQuantity((q) => Math.min(q + 1, displayStockQty || 1))}
+                  disabled={quantity >= (displayStockQty || 1)}
                   data-testid="button-quantity-increase"
                 >
                   +
                 </Button>
               </div>
 
-              {product.inStock ? (
+              {displayInStock ? (
                 <Badge
                   variant="secondary"
                   className="text-green-600"
                   data-testid="badge-stock"
                 >
-                  In Stock ({product.stockQuantity} available)
+                  In Stock ({displayStockQty} available)
                 </Badge>
               ) : (
                 <Badge
@@ -547,7 +556,7 @@ export default function ProductDetail() {
             <div className="flex flex-wrap gap-3 mb-8">
               <Button
                 className="flex-1 min-w-[140px] rounded-full"
-                disabled={!product.inStock || addToCartMutation.isPending}
+                disabled={!displayInStock || addToCartMutation.isPending}
                 onClick={() => {
                   const selectedColor = currentColorVariant?.color;
                   addToCartMutation.mutate({
@@ -564,7 +573,7 @@ export default function ProductDetail() {
               <Button
                 className="flex-1 min-w-[140px] rounded-full border-2 border-primary text-primary hover:bg-primary/10 dark:hover:bg-primary/10"
                 variant="outline"
-                disabled={!product.inStock || buyNowMutation.isPending}
+                disabled={!displayInStock || buyNowMutation.isPending}
                 onClick={handleBuyNow}
                 data-testid="button-buy-now"
               >

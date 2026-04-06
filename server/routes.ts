@@ -1017,7 +1017,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: 'Product not found' });
       }
 
-      const availableStock = (product as any).stockQuantity ?? 0;
+      let availableStock: number;
+      if (selectedColor && (product as any).colorVariants?.length > 0) {
+        const variant = (product as any).colorVariants.find((v: any) => v.color === selectedColor);
+        availableStock = variant?.stockQuantity ?? 0;
+      } else {
+        availableStock = (product as any).stockQuantity ?? 0;
+      }
 
       let cart = await Cart.findOne({ userId });
       
@@ -1067,7 +1073,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const product = await Product.findById(productId).lean();
       if (product) {
-        const availableStock = (product as any).stockQuantity ?? 0;
+        let availableStock: number;
+        if (selectedColor && (product as any).colorVariants?.length > 0) {
+          const variant = (product as any).colorVariants.find((v: any) => v.color === selectedColor);
+          availableStock = variant?.stockQuantity ?? 0;
+        } else {
+          availableStock = (product as any).stockQuantity ?? 0;
+        }
         if (quantity > availableStock) {
           return res.status(400).json({ 
             error: `Only ${availableStock} unit(s) available in stock`,
@@ -1370,7 +1382,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (!product) {
             return res.status(400).json({ error: `Product not found: ${item.productId}` });
           }
-          const available = (product as any).stockQuantity ?? 0;
+          // Check variant-specific stock when a color is selected
+          let available: number;
+          if (item.selectedColor && (product as any).colorVariants?.length > 0) {
+            const variant = (product as any).colorVariants.find((v: any) => v.color === item.selectedColor);
+            available = variant?.stockQuantity ?? 0;
+          } else {
+            available = (product as any).stockQuantity ?? 0;
+          }
           if (item.quantity > available) {
             return res.status(400).json({
               error: `Only ${available} unit(s) available for "${(product as any).name}". Please update your cart.`,
@@ -1396,33 +1415,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             const product = await Product.findById(item.productId);
             if (product) {
-              // Deduct from top-level stockQuantity
-              const newQty = Math.max(0, ((product as any).stockQuantity || 0) - item.quantity);
-              (product as any).stockQuantity = newQty;
-              (product as any).inStock = newQty > 0;
               (product as any).updatedAt = new Date();
 
-              // Also deduct from the specific color variant if applicable
-              if (item.selectedColor && (product as any).colorVariants?.length > 0) {
-                const variant = (product as any).colorVariants.find(
-                  (v: any) => v.color === item.selectedColor
-                );
-                if (variant) {
-                  variant.stockQuantity = Math.max(0, (variant.stockQuantity || 0) - item.quantity);
-                  variant.inStock = variant.stockQuantity > 0;
-                } else {
-                  // Fallback: deduct from all variants equally
-                  for (const v of (product as any).colorVariants) {
-                    v.stockQuantity = Math.max(0, (v.stockQuantity || 0) - item.quantity);
-                    v.inStock = v.stockQuantity > 0;
+              if ((product as any).colorVariants?.length > 0) {
+                // Deduct from the specific color variant
+                if (item.selectedColor) {
+                  const variant = (product as any).colorVariants.find(
+                    (v: any) => v.color === item.selectedColor
+                  );
+                  if (variant) {
+                    variant.stockQuantity = Math.max(0, (variant.stockQuantity || 0) - item.quantity);
+                    variant.inStock = variant.stockQuantity > 0;
+                  } else {
+                    // Fallback: deduct from first variant
+                    const firstVariant = (product as any).colorVariants[0];
+                    firstVariant.stockQuantity = Math.max(0, (firstVariant.stockQuantity || 0) - item.quantity);
+                    firstVariant.inStock = firstVariant.stockQuantity > 0;
                   }
+                } else {
+                  // No color selected — deduct from first variant as fallback
+                  const firstVariant = (product as any).colorVariants[0];
+                  firstVariant.stockQuantity = Math.max(0, (firstVariant.stockQuantity || 0) - item.quantity);
+                  firstVariant.inStock = firstVariant.stockQuantity > 0;
                 }
-              } else if ((product as any).colorVariants?.length > 0) {
-                // No color selected — deduct from all variants
-                for (const v of (product as any).colorVariants) {
-                  v.stockQuantity = Math.max(0, (v.stockQuantity || 0) - item.quantity);
-                  v.inStock = v.stockQuantity > 0;
-                }
+                // Recalculate product-level stock as sum of all variant stocks
+                const totalVariantStock = (product as any).colorVariants.reduce(
+                  (sum: number, v: any) => sum + (v.stockQuantity || 0), 0
+                );
+                (product as any).stockQuantity = totalVariantStock;
+                (product as any).inStock = totalVariantStock > 0;
+              } else {
+                // No color variants — deduct from product-level stock
+                const newQty = Math.max(0, ((product as any).stockQuantity || 0) - item.quantity);
+                (product as any).stockQuantity = newQty;
+                (product as any).inStock = newQty > 0;
               }
 
               await product.save();
