@@ -468,7 +468,7 @@ export default function Home() {
                 View All
               </button>
             </motion.div>
-            {/* Mobile: 2 columns × 3 rows grid */}
+            {/* Mobile: 2 columns × 3 rows grid — always 6 slots */}
             <motion.div
               className="grid grid-cols-2 gap-4 md:hidden"
               variants={staggerContainer}
@@ -476,34 +476,39 @@ export default function Home() {
               whileInView="visible"
               viewport={{ once: true }}
             >
-              {newArrivals.slice(0, 6).map((product: any) => (
-                <motion.div
-                  key={product._id}
-                  variants={fadeInUp}
-                  transition={{ duration: 0.5 }}
-                >
-                  <ProductCard
-                    id={product._id}
-                    displayColor={product.displayColor}
-                    name={product.name}
-                    image={product.displayImages?.[0] || product.images?.[0]}
-                    secondaryImage={product.displayImages?.[1] || product.images?.[1]}
-                    price={product.price}
-                    originalPrice={product.originalPrice}
-                    discount={
-                      product.originalPrice
-                        ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-                        : 0
-                    }
-                    rating={product.rating}
-                    reviewCount={product.reviewCount}
-                    isNew={true}
-                    onClick={() => setLocation(`/product/${product._id}`)}
-                  />
-                </motion.div>
-              ))}
+              {[...newArrivals.slice(0, 6), ...Array(Math.max(0, 6 - newArrivals.slice(0, 6).length)).fill(null)].map((product: any, index: number) =>
+                product ? (
+                  <motion.div
+                    key={product._id}
+                    variants={fadeInUp}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <ProductCard
+                      id={product._id}
+                      displayColor={product.displayColor}
+                      name={product.name}
+                      image={product.displayImages?.[0] || product.images?.[0]}
+                      secondaryImage={product.displayImages?.[1] || product.images?.[1]}
+                      price={product.price}
+                      originalPrice={product.originalPrice}
+                      discount={
+                        product.originalPrice
+                          ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                          : 0
+                      }
+                      rating={product.rating}
+                      reviewCount={product.reviewCount}
+                      isNew={true}
+                      isBestseller={product.isBestseller}
+                      onClick={() => setLocation(`/product/${product._id}`)}
+                    />
+                  </motion.div>
+                ) : (
+                  <div key={`na-mobile-placeholder-${index}`} className="invisible" />
+                )
+              )}
             </motion.div>
-            {/* Desktop: horizontally scrollable cards */}
+            {/* Desktop: horizontally scrollable cards — fixed card width, no stretching */}
             <motion.div
               className="hidden md:flex overflow-x-auto gap-4 pb-3 scrollbar-hide"
               variants={staggerContainer}
@@ -516,7 +521,7 @@ export default function Home() {
                   key={product._id}
                   variants={fadeInUp}
                   transition={{ duration: 0.5 }}
-                  className="flex-shrink-0 w-60 lg:w-64"
+                  className="flex-shrink-0 w-[220px] lg:w-[240px]"
                 >
                   <ProductCard
                     id={product._id}
@@ -534,6 +539,7 @@ export default function Home() {
                     rating={product.rating}
                     reviewCount={product.reviewCount}
                     isNew={true}
+                    isBestseller={product.isBestseller}
                     onClick={() => setLocation(`/product/${product._id}`)}
                   />
                 </motion.div>
@@ -601,7 +607,7 @@ export default function Home() {
                 View All
               </button>
             </motion.div>
-            {/* Mobile: 2 columns × 3 rows grid */}
+            {/* Mobile: 2 columns × 3 rows grid — always 6 slots */}
             <motion.div
               className="grid grid-cols-2 gap-4 md:hidden"
               variants={staggerContainer}
@@ -609,33 +615,38 @@ export default function Home() {
               whileInView="visible"
               viewport={{ once: true }}
             >
-              {trendingProducts.slice(0, 6).map((product: any) => (
-                <motion.div
-                  key={product._id}
-                  variants={fadeInUp}
-                  transition={{ duration: 0.5 }}
-                >
-                  <ProductCard
-                    id={product._id}
-                    displayColor={product.displayColor}
-                    name={product.name}
-                    image={product.displayImages?.[0] || product.images?.[0]}
-                    secondaryImage={product.displayImages?.[1] || product.images?.[1]}
-                    price={product.price}
-                    originalPrice={product.originalPrice}
-                    discount={
-                      product.originalPrice
-                        ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-                        : 0
-                    }
-                    rating={product.rating}
-                    reviewCount={product.reviewCount}
-                    onClick={() => setLocation(`/product/${product._id}`)}
-                  />
-                </motion.div>
-              ))}
+              {[...trendingProducts.slice(0, 6), ...Array(Math.max(0, 6 - trendingProducts.slice(0, 6).length)).fill(null)].map((product: any, index: number) =>
+                product ? (
+                  <motion.div
+                    key={product._id}
+                    variants={fadeInUp}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <ProductCard
+                      id={product._id}
+                      displayColor={product.displayColor}
+                      name={product.name}
+                      image={product.displayImages?.[0] || product.images?.[0]}
+                      secondaryImage={product.displayImages?.[1] || product.images?.[1]}
+                      price={product.price}
+                      originalPrice={product.originalPrice}
+                      discount={
+                        product.originalPrice
+                          ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                          : 0
+                      }
+                      rating={product.rating}
+                      reviewCount={product.reviewCount}
+                      isBestseller={product.isBestseller}
+                      onClick={() => setLocation(`/product/${product._id}`)}
+                    />
+                  </motion.div>
+                ) : (
+                  <div key={`tr-mobile-placeholder-${index}`} className="invisible" />
+                )
+              )}
             </motion.div>
-            {/* Desktop: horizontally scrollable cards */}
+            {/* Desktop: horizontally scrollable cards — fixed card width, no stretching */}
             <motion.div
               className="hidden md:flex overflow-x-auto gap-4 pb-3 scrollbar-hide"
               variants={staggerContainer}
@@ -648,7 +659,7 @@ export default function Home() {
                   key={product._id}
                   variants={fadeInUp}
                   transition={{ duration: 0.5 }}
-                  className="flex-shrink-0 w-60 lg:w-64"
+                  className="flex-shrink-0 w-[220px] lg:w-[240px]"
                 >
                   <ProductCard
                     id={product._id}
@@ -665,6 +676,7 @@ export default function Home() {
                     }
                     rating={product.rating}
                     reviewCount={product.reviewCount}
+                    isBestseller={product.isBestseller}
                     onClick={() => setLocation(`/product/${product._id}`)}
                   />
                 </motion.div>
