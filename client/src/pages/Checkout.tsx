@@ -152,6 +152,7 @@ export default function Checkout() {
           price: item.productId.price,
           quantity: item.quantity,
           selectedColor: item.selectedColor || null,
+          selectedSize: item.selectedSize || null,
           image,
         };
       }),
