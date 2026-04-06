@@ -1505,6 +1505,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 (product as any).inStock = newQty > 0;
               }
 
+              product.markModified('colorVariants');
+              product.markModified('blouseSizes');
               await product.save();
             }
           } catch (invErr: any) {

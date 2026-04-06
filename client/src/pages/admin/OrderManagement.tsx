@@ -800,6 +800,18 @@ export default function OrderManagement() {
                               {item.description}
                             </div>
                           )}
+                          <div className="flex flex-wrap gap-2 mb-1">
+                            {(item as any).selectedColor && (
+                              <span className="text-xs bg-background border px-2 py-0.5 rounded">
+                                Color: {(item as any).selectedColor}
+                              </span>
+                            )}
+                            {(item as any).selectedSize && (
+                              <span className="text-xs bg-background border px-2 py-0.5 rounded font-medium">
+                                Size: {(item as any).selectedSize}
+                              </span>
+                            )}
+                          </div>
                           <div className="text-sm text-muted-foreground">
                             Qty: {item.quantity} × ₹{item.price.toLocaleString()}
                           </div>

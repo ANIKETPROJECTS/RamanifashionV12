@@ -315,8 +315,9 @@ export default function ProductDetail() {
     : currentColorVariant
       ? (currentColorVariant.stockQuantity ?? 0)
       : (product.stockQuantity ?? 0);
-  const displayInStock = blouseSizes.length > 0
-    ? (selectedSizeData ? selectedSizeData.stockQuantity > 0 : false)
+  // null means "blouse with no size selected yet" — show neutral badge
+  const displayInStock: boolean | null = blouseSizes.length > 0
+    ? (selectedSizeData ? selectedSizeData.stockQuantity > 0 : null)
     : currentColorVariant
       ? (currentColorVariant.inStock !== undefined
           ? currentColorVariant.inStock
@@ -518,7 +519,15 @@ export default function ProductDetail() {
                 </Button>
               </div>
 
-              {displayInStock ? (
+              {displayInStock === null ? (
+                <Badge
+                  variant="secondary"
+                  className="text-muted-foreground"
+                  data-testid="badge-select-size"
+                >
+                  Select a size to see availability
+                </Badge>
+              ) : displayInStock ? (
                 <Badge
                   variant="secondary"
                   className="text-green-600"

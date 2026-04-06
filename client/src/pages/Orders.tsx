@@ -185,6 +185,18 @@ export default function Orders() {
                           />
                           <div className="flex-1">
                             <h5 className="font-medium" data-testid={`text-item-name-${index}`}>{item.name}</h5>
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                              {item.selectedColor && (
+                                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded" data-testid={`text-item-color-${index}`}>
+                                  Color: {item.selectedColor}
+                                </span>
+                              )}
+                              {item.selectedSize && (
+                                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded" data-testid={`text-item-size-${index}`}>
+                                  Size: {item.selectedSize}
+                                </span>
+                              )}
+                            </div>
                             <div className="flex items-center gap-4 mt-1">
                               <span className="text-sm text-muted-foreground">Qty: {item.quantity}</span>
                               <span className="font-semibold text-primary" data-testid={`text-item-price-${index}`}>
