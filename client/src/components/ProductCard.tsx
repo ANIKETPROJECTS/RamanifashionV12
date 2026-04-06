@@ -220,12 +220,12 @@ export default function ProductCard({
   
   return (
     <Card 
-      className="overflow-hidden cursor-pointer hover-elevate active-elevate-2 group flex flex-col h-[300px] md:h-[360px] !bg-transparent"
+      className="overflow-hidden cursor-pointer hover-elevate active-elevate-2 group flex flex-col h-[310px] md:h-[375px] !bg-transparent"
       onClick={() => onClick ? onClick() : setLocation(`/product/${productDetailId}`)}
       onMouseEnter={() => prefetchProduct(productDetailId)}
       data-testid={testId}
     >
-      <div className="relative h-[70%] overflow-hidden flex-shrink-0">
+      <div className="relative h-[74%] overflow-hidden flex-shrink-0">
         <img
           src={currentImage || "/default-saree.jpg"}
           alt={name}
@@ -274,7 +274,7 @@ export default function ProductCard({
         </div>
       </div>
 
-      <CardContent className="p-2 md:p-3 flex flex-col h-[30%] overflow-hidden">
+      <CardContent className="p-2 md:p-3 flex flex-col h-[26%] overflow-hidden">
         <h3 className="font-medium text-xs md:text-sm line-clamp-2 leading-tight mb-0.5" data-testid={`text-product-name-${id}`}>
           {name}
         </h3>

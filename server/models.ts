@@ -33,6 +33,13 @@ const productSchema = new Schema({
       message: 'Product must have at least one color variant'
     }
   },
+  blouseSizes: {
+    type: [{
+      size: { type: String, required: true },
+      stockQuantity: { type: Number, default: 0 },
+    }],
+    default: [],
+  },
   occasion: { type: String },
   pattern: { type: String },
   workType: { type: String },

@@ -58,6 +58,7 @@ export default function InventoryManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
+  const [editBlouseSizes, setEditBlouseSizes] = useState<Array<{ size: string; stockQuantity: number }>>([]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
@@ -315,6 +316,11 @@ export default function InventoryManagement() {
       setEditingProduct(fullProduct);
       setEditingVariantIndex(vIdx);
       setUploadedImages(images);
+      if (fullProduct.category === "BLOUSES" && Array.isArray(fullProduct.blouseSizes)) {
+        setEditBlouseSizes(fullProduct.blouseSizes);
+      } else {
+        setEditBlouseSizes([]);
+      }
       setProductForm({
         name: fullProduct.name || "",
         description: fullProduct.description || "",
@@ -406,7 +412,13 @@ export default function InventoryManagement() {
 
     // Compute product-level stockQuantity as the sum of all variant stock
     const totalVariantStock = colorVariants.reduce((sum: number, v: any) => sum + (v.stockQuantity || 0), 0);
-    const productLevelStock = colorVariants.length > 0 ? totalVariantStock : newStockQty;
+    const isBlouseCategory = productForm.category === "BLOUSES";
+    const blouseSizeStock = isBlouseCategory && editBlouseSizes.length > 0
+      ? editBlouseSizes.reduce((sum, s) => sum + (s.stockQuantity || 0), 0)
+      : 0;
+    const productLevelStock = isBlouseCategory && editBlouseSizes.length > 0
+      ? blouseSizeStock
+      : colorVariants.length > 0 ? totalVariantStock : newStockQty;
     
     const formattedData = {
       name: productForm.name,
@@ -418,6 +430,7 @@ export default function InventoryManagement() {
       fabric: productForm.fabric || undefined,
       color: productForm.color || undefined,
       colorVariants: colorVariants,
+      blouseSizes: isBlouseCategory ? editBlouseSizes : [],
       occasion: productForm.occasion || undefined,
       pattern: productForm.pattern || undefined,
       workType: productForm.workType || undefined,
@@ -1209,6 +1222,49 @@ export default function InventoryManagement() {
                 <Label htmlFor="edit-onSale" data-testid="label-edit-on-sale">On Sale</Label>
               </div>
             </div>
+
+            {/* Blouse Sizes (only shown for BLOUSES category) */}
+            {productForm.category === "BLOUSES" && (
+              <div className="border rounded-xl p-4 space-y-3 bg-pink-50/40">
+                <h3 className="font-semibold text-sm text-pink-700">Blouse Sizes & Stock</h3>
+                {editBlouseSizes.length > 0 ? (
+                  <div className="border rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-pink-100/60">
+                        <tr>
+                          <th className="text-left px-3 py-2 font-medium">Size</th>
+                          <th className="text-left px-3 py-2 font-medium">Stock</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editBlouseSizes.map((s, i) => (
+                          <tr key={i} className="border-t">
+                            <td className="px-3 py-2 font-medium">{s.size}</td>
+                            <td className="px-3 py-2">
+                              <Input
+                                type="number"
+                                min="0"
+                                className="h-7 w-24"
+                                value={s.stockQuantity === 0 ? "" : s.stockQuantity}
+                                placeholder="0"
+                                onChange={(e) => {
+                                  const v = Math.floor(Number(e.target.value));
+                                  setEditBlouseSizes(prev => prev.map((item, idx) =>
+                                    idx === i ? { ...item, stockQuantity: isNaN(v) ? 0 : Math.max(0, v) } : item
+                                  ));
+                                }}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No blouse sizes configured for this product.</p>
+                )}
+              </div>
+            )}
 
             <div className="space-y-4 border-t pt-4">
               <h3 className="font-semibold text-sm">Product Specifications</h3>

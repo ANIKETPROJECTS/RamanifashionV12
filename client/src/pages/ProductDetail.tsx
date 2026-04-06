@@ -44,6 +44,7 @@ export default function ProductDetail() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [similarSort, setSimilarSort] = useState("rating-desc");
+  const [selectedBlouseSize, setSelectedBlouseSize] = useState<string | null>(null);
 
   // Extract base product ID and variant index from URL
   const { baseProductId, variantIndexFromUrl } = useMemo(() => {
@@ -153,7 +154,8 @@ export default function ProductDetail() {
       const colorInfo = currentColorVariant
         ? ` (${currentColorVariant.color})`
         : "";
-      toast({ title: `Added to cart successfully!${colorInfo}` });
+      const sizeInfo = selectedBlouseSize ? ` - Size ${selectedBlouseSize}` : "";
+      toast({ title: `Added to cart successfully!${colorInfo}${sizeInfo}` });
     },
     onError: () => {
       const token = localStorage.getItem("token");
@@ -168,7 +170,8 @@ export default function ProductDetail() {
         localStorageService.addToCart(product._id, quantity, selectedColor);
         queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
         const colorInfo = selectedColor ? ` (${selectedColor})` : "";
-        toast({ title: `Added to cart successfully!${colorInfo}` });
+        const sizeInfo = selectedBlouseSize ? ` - Size ${selectedBlouseSize}` : "";
+        toast({ title: `Added to cart successfully!${colorInfo}${sizeInfo}` });
       } else {
         toast({ title: "Failed to add to cart", variant: "destructive" });
       }
@@ -245,6 +248,14 @@ export default function ProductDetail() {
       openLogin();
       return;
     }
+    const productBlouseSizes =
+      product.category === "BLOUSES" && Array.isArray(product.blouseSizes) && product.blouseSizes.length > 0
+        ? product.blouseSizes
+        : [];
+    if (productBlouseSizes.length > 0 && !selectedBlouseSize) {
+      toast({ title: "Please select a size before proceeding", variant: "destructive" });
+      return;
+    }
     const colorVariants =
       product.colorVariants && product.colorVariants.length > 0
         ? product.colorVariants
@@ -256,6 +267,7 @@ export default function ProductDetail() {
       productId: product._id,
       quantity,
       selectedColor,
+      selectedSize: selectedBlouseSize || undefined,
     });
   };
 
@@ -291,14 +303,27 @@ export default function ProductDetail() {
   const currentColorVariant =
     colorVariants && colorVariants[selectedColorIndex];
 
-  const displayStockQty = currentColorVariant
-    ? (currentColorVariant.stockQuantity ?? 0)
-    : (product.stockQuantity ?? 0);
-  const displayInStock = currentColorVariant
-    ? (currentColorVariant.inStock !== undefined
-        ? currentColorVariant.inStock
-        : (currentColorVariant.stockQuantity ?? 0) > 0)
-    : product.inStock;
+  const blouseSizes: Array<{ size: string; stockQuantity: number }> =
+    product.category === "BLOUSES" && Array.isArray(product.blouseSizes) && product.blouseSizes.length > 0
+      ? product.blouseSizes
+      : [];
+
+  const selectedSizeData = selectedBlouseSize
+    ? blouseSizes.find((s) => s.size === selectedBlouseSize) ?? null
+    : null;
+
+  const displayStockQty = blouseSizes.length > 0
+    ? (selectedSizeData ? selectedSizeData.stockQuantity : 0)
+    : currentColorVariant
+      ? (currentColorVariant.stockQuantity ?? 0)
+      : (product.stockQuantity ?? 0);
+  const displayInStock = blouseSizes.length > 0
+    ? (selectedSizeData ? selectedSizeData.stockQuantity > 0 : false)
+    : currentColorVariant
+      ? (currentColorVariant.inStock !== undefined
+          ? currentColorVariant.inStock
+          : (currentColorVariant.stockQuantity ?? 0) > 0)
+      : product.inStock;
 
   const images =
     currentColorVariant &&
@@ -553,16 +578,68 @@ export default function ProductDetail() {
               </div>
             )}
 
+            {/* Blouse Size Selection */}
+            {blouseSizes.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold mb-3 text-foreground">
+                  Select Size:
+                  {selectedBlouseSize && (
+                    <span className="ml-2 font-normal text-primary">{selectedBlouseSize}</span>
+                  )}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {blouseSizes.map((s) => {
+                    const inStockSize = s.stockQuantity > 0;
+                    const isSelected = selectedBlouseSize === s.size;
+                    return (
+                      <button
+                        key={s.size}
+                        onClick={() => setSelectedBlouseSize(isSelected ? null : s.size)}
+                        disabled={!inStockSize}
+                        className={`min-w-[48px] h-10 px-3 rounded-md border-2 text-sm font-medium transition-all
+                          ${isSelected
+                            ? "border-primary bg-primary text-white"
+                            : inStockSize
+                              ? "border-border hover:border-primary hover:text-primary"
+                              : "border-muted text-muted-foreground line-through cursor-not-allowed opacity-50"
+                          }`}
+                        data-testid={`button-size-${s.size}`}
+                      >
+                        {s.size}
+                      </button>
+                    );
+                  })}
+                </div>
+                {blouseSizes.length > 0 && !selectedBlouseSize && (
+                  <p className="text-xs text-muted-foreground mt-2">Please select a size to add to cart</p>
+                )}
+                {selectedSizeData && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {selectedSizeData.stockQuantity} in stock for size {selectedBlouseSize}
+                  </p>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-3 mb-8">
               <Button
                 className="flex-1 min-w-[140px] rounded-full"
                 disabled={!displayInStock || addToCartMutation.isPending}
                 onClick={() => {
+                  const productBlouseSizes =
+                    product.category === "BLOUSES" && Array.isArray(product.blouseSizes) && product.blouseSizes.length > 0
+                      ? product.blouseSizes
+                      : [];
+                  if (productBlouseSizes.length > 0 && !selectedBlouseSize) {
+                    toast({ title: "Please select a size before adding to cart", variant: "destructive" });
+                    return;
+                  }
                   const selectedColor = currentColorVariant?.color;
                   addToCartMutation.mutate({
                     productId: product._id,
                     quantity,
                     selectedColor,
+                    selectedSize: selectedBlouseSize || undefined,
                   });
                 }}
                 data-testid="button-add-to-cart"

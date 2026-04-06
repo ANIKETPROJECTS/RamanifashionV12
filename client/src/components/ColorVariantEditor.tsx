@@ -303,8 +303,14 @@ export function ColorVariantEditor({ variants, onChange, availableColors, adminT
                 id="stock-quantity"
                 type="number"
                 min="0"
-                value={stockQuantity}
-                onChange={(e) => setStockQuantity(parseInt(e.target.value) || 0)}
+                value={stockQuantity === 0 ? "" : stockQuantity}
+                placeholder="0"
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  if (raw === "" || raw === "-") { setStockQuantity(0); return; }
+                  const num = Math.floor(Number(raw));
+                  setStockQuantity(isNaN(num) ? 0 : Math.max(0, num));
+                }}
                 data-testid="input-stock-quantity"
               />
             </div>
