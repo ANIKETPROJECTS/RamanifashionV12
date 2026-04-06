@@ -1421,7 +1421,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const orderNumber = 'RM' + Date.now();
+      // Generate sequential order number: RM + YYYYMMDD + 2-digit sequence
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const dateStr = `${year}${month}${day}`;
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+      const todayCount = await Order.countDocuments({ createdAt: { $gte: startOfDay, $lt: endOfDay } });
+      const sequence = String(todayCount + 1).padStart(2, '0');
+      const orderNumber = `RM${dateStr}${sequence}`;
+
       const order = new Order({
         userId: (req as any).user.userId,
         orderNumber,
@@ -2894,6 +2905,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
           limit: limitNum,
           totalPages: Math.ceil(total / limitNum)
         }
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get a single customer by ID with full details
+  app.get("/api/admin/customers/:id", authenticateAdmin, async (req, res) => {
+    try {
+      const customer = await Customer.findById(req.params.id).lean();
+      if (!customer) return res.status(404).json({ error: 'Customer not found' });
+
+      const orders = await Order.find({ userId: customer._id }).sort({ createdAt: -1 }).lean();
+      const wishlist: any = await Wishlist.findOne({ userId: customer._id })
+        .populate({ path: 'items.productId', select: 'name price images colorVariants' })
+        .lean();
+      const savedAddresses = await Address.find({ userId: customer._id }).sort({ isDefault: -1, createdAt: -1 }).lean();
+
+      let displayAddress = (customer as any).address;
+      if (savedAddresses && savedAddresses.length > 0) {
+        const a = savedAddresses[0];
+        displayAddress = { street: a.address, city: a.city, state: a.state, pincode: a.pincode, landmark: a.locality };
+      }
+
+      const wishlistProducts = (wishlist && Array.isArray(wishlist.items))
+        ? wishlist.items.map((item: any) => item.productId).filter(Boolean)
+        : [];
+
+      res.json({
+        _id: customer._id,
+        phone: (customer as any).phone,
+        name: (customer as any).name || '',
+        email: (customer as any).email || '',
+        dob: (customer as any).dob,
+        address: displayAddress,
+        phoneVerified: (customer as any).phoneVerified,
+        notifyUpdates: (customer as any).notifyUpdates,
+        lastLogin: (customer as any).lastLogin,
+        createdAt: (customer as any).createdAt,
+        updatedAt: (customer as any).updatedAt,
+        stats: {
+          totalOrders: orders.length,
+          totalSpent: orders.reduce((s, o) => s + ((o as any).total || 0), 0),
+          pendingOrders: orders.filter((o: any) => o.orderStatus === 'pending').length,
+          completedOrders: orders.filter((o: any) => o.orderStatus === 'delivered').length,
+          wishlistCount: wishlistProducts.length,
+        },
+        wishlistItems: wishlistProducts,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get all orders for a specific customer (paginated, with full details)
+  app.get("/api/admin/customers/:id/orders", authenticateAdmin, async (req, res) => {
+    try {
+      const { page = '1', limit = '10' } = req.query;
+      const pageNum = parseInt(page as string);
+      const limitNum = parseInt(limit as string);
+      const skip = (pageNum - 1) * limitNum;
+
+      const total = await Order.countDocuments({ userId: req.params.id });
+      const orders = await Order.find({ userId: req.params.id })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean();
+
+      res.json({
+        orders: orders.map((order: any) => ({
+          orderId: order._id,
+          orderNumber: order.orderNumber,
+          items: order.items || [],
+          total: order.total,
+          subtotal: order.subtotal,
+          shippingCharges: order.shippingCharges,
+          tax: order.tax,
+          discount: order.discount,
+          status: order.orderStatus,
+          paymentStatus: order.paymentStatus,
+          paymentMethod: order.paymentMethod,
+          shippingAddress: order.shippingAddress,
+          createdAt: order.createdAt,
+        })),
+        pagination: {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum),
+        },
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });

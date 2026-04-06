@@ -28,6 +28,7 @@ import ProductManagement from "@/pages/admin/ProductManagement";
 import InventoryManagement from "@/pages/admin/InventoryManagement";
 import OrderManagement from "@/pages/admin/OrderManagement";
 import CustomerManagement from "@/pages/admin/CustomerManagement";
+import CustomerDetail from "@/pages/admin/CustomerDetail";
 import ReviewManagement from "@/pages/admin/ReviewManagement";
 import Analytics from "@/pages/admin/Analytics";
 import MediaManagement from "@/pages/admin/MediaManagement";
@@ -72,6 +73,7 @@ function Router() {
       <Route path="/admin/inventory" component={InventoryManagement} />
       <Route path="/admin/orders" component={OrderManagement} />
       <Route path="/admin/customers" component={CustomerManagement} />
+      <Route path="/admin/customers/:id" component={CustomerDetail} />
       <Route path="/admin/reviews" component={ReviewManagement} />
       <Route path="/admin/analytics" component={Analytics} />
       <Route path="/admin/categories" component={CategoryManagement} />
