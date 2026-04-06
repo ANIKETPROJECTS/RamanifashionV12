@@ -126,6 +126,8 @@ export default function ProductManagement() {
   const [productForm, setProductForm] = useState({
     name: "",
     description: "",
+    subDescription: "",
+    detailedDescription: "",
     price: "",
     originalPrice: "",
     category: "",
@@ -270,6 +272,8 @@ export default function ProductManagement() {
     setProductForm({
       name: "",
       description: "",
+      subDescription: "",
+      detailedDescription: "",
       price: "",
       originalPrice: "",
       category: "",
@@ -368,6 +372,8 @@ export default function ProductManagement() {
     const formattedData = {
       name: productForm.name,
       description: productForm.description,
+      subDescription: productForm.subDescription || undefined,
+      detailedDescription: productForm.detailedDescription || undefined,
       price: parseFloat(productForm.price),
       originalPrice: productForm.originalPrice ? parseFloat(productForm.originalPrice) : undefined,
       category: productForm.category,
@@ -560,13 +566,38 @@ export default function ProductManagement() {
                   </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description" data-testid="label-description">Description</Label>
+                <Label htmlFor="description" data-testid="label-description">Description *</Label>
                 <Textarea
                   id="description"
                   value={productForm.description}
                   onChange={(e) => setProductForm({...productForm, description: e.target.value})}
                   rows={3}
                   data-testid="input-description"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="subDescription" data-testid="label-sub-description">Sub Description</Label>
+                <p className="text-xs text-muted-foreground">Short tagline shown below the product name on the detail page.</p>
+                <Input
+                  id="subDescription"
+                  value={productForm.subDescription}
+                  onChange={(e) => setProductForm({...productForm, subDescription: e.target.value})}
+                  placeholder="e.g., Handcrafted pure silk saree with zari border"
+                  data-testid="input-sub-description"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="detailedDescription" data-testid="label-detailed-description">Detailed Product Description</Label>
+                <p className="text-xs text-muted-foreground">Full description shown in the "Product Description" section on the detail page.</p>
+                <Textarea
+                  id="detailedDescription"
+                  value={productForm.detailedDescription}
+                  onChange={(e) => setProductForm({...productForm, detailedDescription: e.target.value})}
+                  rows={5}
+                  placeholder="Describe the product in detail — fabric, craftsmanship, styling tips, etc."
+                  data-testid="input-detailed-description"
                 />
               </div>
 

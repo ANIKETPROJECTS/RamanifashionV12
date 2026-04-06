@@ -462,12 +462,12 @@ export default function ProductDetail() {
               {product.name}
             </h1>
             
-            {product.description && (
+            {product.subDescription && (
               <p
                 className="text-sm text-muted-foreground mb-4"
                 data-testid="text-product-description-subtext"
               >
-                {product.description}
+                {product.subDescription}
               </p>
             )}
 
@@ -711,7 +711,7 @@ export default function ProductDetail() {
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
                   <p>
-                    {product.description ||
+                    {product.detailedDescription || product.description ||
                       "Beautiful and elegant saree perfect for any occasion."}
                   </p>
                 </AccordionContent>

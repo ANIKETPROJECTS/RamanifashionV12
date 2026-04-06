@@ -4,6 +4,8 @@ import mongoose, { Schema, Model } from 'mongoose';
 const productSchema = new Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
+  subDescription: { type: String },
+  detailedDescription: { type: String },
   price: { type: Number, required: true },
   originalPrice: { type: Number },
   images: [{ type: String }],
