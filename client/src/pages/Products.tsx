@@ -178,6 +178,7 @@ export default function Products() {
   if (isTrending) {
     queryParams.append("isTrending", "true");
   }
+  queryParams.append("inStock", "false");
 
   const { data: productsData, isLoading } = useQuery({
     queryKey: ["/api/products", queryParams.toString()],
@@ -620,6 +621,7 @@ export default function Products() {
                           reviewCount={product.reviewCount}
                           isNew={product.isNew}
                           isBestseller={product.isBestseller}
+                          inStock={product.variantInStock !== undefined ? product.variantInStock !== false : product.inStock !== false}
                           context="products"
                           shortDescription={product.subDescription}
                         />

@@ -255,7 +255,7 @@ export default function ProductCard({
 
         {!inStock && (
           <div className="absolute bottom-2 left-2 z-20">
-            <span className="bg-primary text-white text-xs font-semibold px-2.5 py-1 rounded-sm" data-testid={`badge-sold-out-${id}`}>
+            <span className="bg-primary text-white text-xs font-semibold px-3 py-1.5 rounded-lg" data-testid={`badge-sold-out-${id}`}>
               Sold Out
             </span>
           </div>
