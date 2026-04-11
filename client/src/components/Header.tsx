@@ -509,7 +509,7 @@ export default function Header({ cartCount = 0, wishlistCount = 0, onMenuClick }
             <Button 
               variant="ghost" 
               size="icon" 
-              className="h-8 w-8 md:h-9 md:w-9 [&_svg]:!size-4 md:[&_svg]:!size-[18px]"
+              className="h-10 w-10 md:h-11 md:w-11 [&_svg]:!size-[18px] md:[&_svg]:!size-5"
               onClick={() => {
                 setSearchBarOpen(!searchBarOpen);
                 if (!searchBarOpen) {
@@ -524,7 +524,7 @@ export default function Header({ cartCount = 0, wishlistCount = 0, onMenuClick }
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 md:h-9 md:w-9 hover:bg-gray-100 [&_svg]:!size-4 md:[&_svg]:!size-[18px]" data-testid="button-account">
+                  <Button variant="ghost" size="icon" className="h-10 w-10 md:h-11 md:w-11 hover:bg-gray-100 [&_svg]:!size-[18px] md:[&_svg]:!size-5" data-testid="button-account">
                     <User />
                   </Button>
                 </DropdownMenuTrigger>
@@ -553,7 +553,7 @@ export default function Header({ cartCount = 0, wishlistCount = 0, onMenuClick }
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 md:h-9 md:w-9 hover:bg-gray-100 [&_svg]:!size-4 md:[&_svg]:!size-[18px]" 
+                className="h-10 w-10 md:h-11 md:w-11 hover:bg-gray-100 [&_svg]:!size-[18px] md:[&_svg]:!size-5" 
                 onClick={openLogin} 
                 data-testid="button-login"
               >
@@ -561,7 +561,7 @@ export default function Header({ cartCount = 0, wishlistCount = 0, onMenuClick }
               </Button>
             )}
             
-            <Button variant="ghost" size="icon" className="relative h-8 w-8 md:h-9 md:w-9 hover:bg-gray-100 [&_svg]:!size-4 md:[&_svg]:!size-[18px]" onClick={() => setLocation("/wishlist")} data-testid="button-wishlist">
+            <Button variant="ghost" size="icon" className="relative h-10 w-10 md:h-11 md:w-11 hover:bg-gray-100 [&_svg]:!size-[18px] md:[&_svg]:!size-5" onClick={() => setLocation("/wishlist")} data-testid="button-wishlist">
               <Heart />
               {actualWishlistCount > 0 && (
                 <Badge 
@@ -573,7 +573,7 @@ export default function Header({ cartCount = 0, wishlistCount = 0, onMenuClick }
               )}
             </Button>
             
-            <Button variant="ghost" size="icon" className="relative h-8 w-8 md:h-9 md:w-9 hover:bg-gray-100 [&_svg]:!size-4 md:[&_svg]:!size-[18px]" onClick={() => setLocation("/cart")} data-testid="button-bag">
+            <Button variant="ghost" size="icon" className="relative h-10 w-10 md:h-11 md:w-11 hover:bg-gray-100 [&_svg]:!size-[18px] md:[&_svg]:!size-5" onClick={() => setLocation("/cart")} data-testid="button-bag">
               <ShoppingBag />
               {actualCartCount > 0 && (
                 <Badge 
