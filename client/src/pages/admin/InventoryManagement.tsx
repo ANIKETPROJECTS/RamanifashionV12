@@ -1188,21 +1188,24 @@ export default function InventoryManagement() {
               )}
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="edit-name" data-testid="label-edit-product-name">Product Name *</Label>
+              <Input
+                id="edit-name"
+                value={productForm.name}
+                onChange={(e) => setProductForm({...productForm, name: e.target.value})}
+                required
+                data-testid="input-edit-product-name"
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name" data-testid="label-edit-product-name">Product Name *</Label>
-                <Input
-                  id="edit-name"
-                  value={productForm.name}
-                  onChange={(e) => setProductForm({...productForm, name: e.target.value})}
-                  required
-                  data-testid="input-edit-product-name"
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="edit-category" data-testid="label-edit-category">Category *</Label>
-                <Select value={productForm.category} onValueChange={(value) => setProductForm({...productForm, category: value})}>
+                <Select
+                  value={productForm.category}
+                  onValueChange={(value) => setProductForm({...productForm, category: value, subcategory: ""})}
+                >
                   <SelectTrigger data-testid="select-edit-category">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -1213,11 +1216,32 @@ export default function InventoryManagement() {
                   </SelectContent>
                 </Select>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-subcategory" data-testid="label-edit-subcategory">Sub Category</Label>
+                <Select
+                  value={productForm.subcategory || "__none__"}
+                  onValueChange={(value) => setProductForm({...productForm, subcategory: value === "__none__" ? "" : value})}
+                  disabled={!productForm.category}
+                >
+                  <SelectTrigger data-testid="select-edit-subcategory">
+                    <SelectValue placeholder={productForm.category ? "Select sub-category" : "Select category first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">None</SelectItem>
+                    {(categoryTree || [])
+                      .find((cat: any) => cat.name === productForm.category)
+                      ?.subCategories?.map((sub: any) => (
+                        <SelectItem key={sub.slug} value={sub.name}>{sub.name}</SelectItem>
+                      )) || []}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-subDescription" data-testid="label-edit-sub-description">Sub Description</Label>
-              <p className="text-xs text-muted-foreground">Short one-liner shown on the product card and below the product name.</p>
+              <Label htmlFor="edit-subDescription" data-testid="label-edit-sub-description">Short Description</Label>
+              <p className="text-xs text-muted-foreground">One-liner shown on the product card and below the product name.</p>
               <Input
                 id="edit-subDescription"
                 value={productForm.subDescription}
@@ -1237,17 +1261,6 @@ export default function InventoryManagement() {
                 rows={4}
                 placeholder="Describe the product in detail — fabric, craftsmanship, styling tips, etc."
                 data-testid="input-edit-detailed-description"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-description" data-testid="label-edit-description">Description (legacy)</Label>
-              <Textarea
-                id="edit-description"
-                value={productForm.description}
-                onChange={(e) => setProductForm({...productForm, description: e.target.value})}
-                rows={2}
-                data-testid="input-edit-description"
               />
             </div>
 
