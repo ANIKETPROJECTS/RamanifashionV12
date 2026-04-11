@@ -3,7 +3,15 @@
 ## Project Overview
 Full-stack e-commerce platform for Ramani Fashion, a saree retailer. Built with Express.js backend, React/Vite frontend, MongoDB database, integrated with PhonePe payment gateway, Shiprocket shipping, and WhatsApp-based OTP authentication.
 
-## Current State (December 1, 2025)
+## Current State (April 11, 2026)
+
+### Replit Migration Notes
+- Project is preserved as an Express.js backend with React/Vite frontend.
+- Development workflow runs `npm run dev` on port 5000 for the Replit web preview.
+- Production deployment is configured to build with `npm run build` and start the bundled server from `dist/index.js`.
+- Vite is served through the Express server in development with host allowances for Replit's preview proxy.
+
+## Previous State (December 1, 2025)
 
 ### ✅ Recently Completed Features
 
