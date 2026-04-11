@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { compressImageFile } from "@/lib/compressImage";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -58,6 +58,7 @@ export default function InventoryManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
+  const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
   const [editBlouseSizes, setEditBlouseSizes] = useState<Array<{ size: string; stockQuantity: number }>>([]);
   const [editNewSizeInput, setEditNewSizeInput] = useState("");
   const [editNewSizeStock, setEditNewSizeStock] = useState(0);
@@ -498,13 +499,13 @@ export default function InventoryManagement() {
     updateProductMutation.mutate({ id: editingProduct._id, data: formattedData });
   };
 
-  const filteredInventory = useMemo(() => {
+  const groupedInventory = useMemo(() => {
     if (!inventory) return [];
 
     let filtered = [...inventory];
 
     if (searchQuery) {
-      filtered = filtered.filter((p: any) => 
+      filtered = filtered.filter((p: any) =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.category?.toLowerCase().includes(searchQuery.toLowerCase())
       );
@@ -519,8 +520,11 @@ export default function InventoryManagement() {
       }
     }
 
-    const expanded: any[] = [];
+    const groups: Array<{ product: any; variants: any[] }> = [];
+
     filtered.forEach((product: any) => {
+      const variantRows: any[] = [];
+
       if (product.colorVariants && product.colorVariants.length > 0) {
         product.colorVariants.forEach((variant: any, vIndex: number) => {
           const isBlouse = product.category === "BLOUSES";
@@ -530,7 +534,7 @@ export default function InventoryManagement() {
 
           if (isBlouse && variantBlouseSizes.length > 0) {
             variantBlouseSizes.forEach((sizeEntry: any) => {
-              expanded.push({
+              variantRows.push({
                 ...product,
                 variantColor: variant.color,
                 variantIndex: vIndex,
@@ -540,7 +544,7 @@ export default function InventoryManagement() {
               });
             });
           } else {
-            expanded.push({
+            variantRows.push({
               ...product,
               variantColor: variant.color,
               variantIndex: vIndex,
@@ -551,38 +555,55 @@ export default function InventoryManagement() {
           }
         });
       } else {
-        expanded.push({ ...product, variantSize: null });
+        variantRows.push({ ...product, variantSize: null });
+      }
+
+      let filteredVariants = variantRows;
+      if (filterStockStatus === "inStock") {
+        filteredVariants = variantRows.filter((v: any) => v.inStock === true && (v.stockQuantity || 0) > 0);
+      } else if (filterStockStatus === "lowStock") {
+        filteredVariants = variantRows.filter((v: any) => (v.stockQuantity || 0) < 10 && (v.stockQuantity || 0) > 0 && v.inStock);
+      } else if (filterStockStatus === "outOfStock") {
+        filteredVariants = variantRows.filter((v: any) => !v.inStock || (v.stockQuantity || 0) === 0);
+      }
+
+      if (filteredVariants.length > 0) {
+        groups.push({ product, variants: filteredVariants });
       }
     });
 
-    let result = expanded;
-    if (filterStockStatus === "inStock") {
-      result = expanded.filter((p: any) => p.inStock === true && (p.stockQuantity || 0) > 0);
-    } else if (filterStockStatus === "lowStock") {
-      result = expanded.filter((p: any) => (p.stockQuantity || 0) < 10 && (p.stockQuantity || 0) > 0 && p.inStock);
-    } else if (filterStockStatus === "outOfStock") {
-      result = expanded.filter((p: any) => !p.inStock || (p.stockQuantity || 0) === 0);
-    }
-
-    result.sort((a: any, b: any) => {
+    groups.sort((a: any, b: any) => {
+      const pa = a.product;
+      const pb = b.product;
       switch (sortBy) {
         case "name":
-          return (a.name || "").localeCompare(b.name || "");
+          return (pa.name || "").localeCompare(pb.name || "");
         case "stock":
-          return (a.stockQuantity || 0) - (b.stockQuantity || 0);
+          return (pa.stockQuantity || 0) - (pb.stockQuantity || 0);
         case "stockDesc":
-          return (b.stockQuantity || 0) - (a.stockQuantity || 0);
+          return (pb.stockQuantity || 0) - (pa.stockQuantity || 0);
         case "price":
-          return (a.price || 0) - (b.price || 0);
+          return (pa.price || 0) - (pb.price || 0);
         case "category":
-          return (a.category || "").localeCompare(b.category || "");
+          return (pa.category || "").localeCompare(pb.category || "");
         default:
           return 0;
       }
     });
 
-    return result;
+    return groups;
   }, [inventory, searchQuery, filterCategory, filterStockStatus, sortBy]);
+
+  const filteredInventory = groupedInventory;
+
+  const toggleProductExpand = (productId: string) => {
+    setExpandedProducts(prev => {
+      const next = new Set(prev);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+  };
 
   const categories = useMemo(() => {
     if (!inventory) return [];
@@ -891,13 +912,13 @@ export default function InventoryManagement() {
       <Card>
         <CardHeader>
           <CardTitle data-testid="text-inventory-title">
-            Inventory ({filteredInventory.length})
+            Inventory ({groupedInventory.length} products)
           </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="text-center py-8" data-testid="text-loading">Loading inventory...</div>
-          ) : filteredInventory.length === 0 ? (
+          ) : groupedInventory.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground" data-testid="text-no-inventory">
               No inventory items found. {searchQuery || filterCategory !== "all" || filterStockStatus !== "all" ? "Try adjusting your filters." : ""}
             </div>
@@ -905,97 +926,160 @@ export default function InventoryManagement() {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead data-testid="header-product-name">Product Name</TableHead>
-                    <TableHead data-testid="header-color">Color</TableHead>
-                    <TableHead data-testid="header-size">Size</TableHead>
-                    <TableHead data-testid="header-category">Category</TableHead>
-                    <TableHead data-testid="header-price">Price</TableHead>
-                    <TableHead data-testid="header-current-stock">Current Stock</TableHead>
-                    <TableHead data-testid="header-status">Status</TableHead>
-                    <TableHead data-testid="header-actions">Actions</TableHead>
+                  <TableRow className="bg-muted/30">
+                    <TableHead className="w-10" />
+                    <TableHead data-testid="header-product-name" className="font-semibold min-w-[200px]">Product / Variant</TableHead>
+                    <TableHead data-testid="header-category" className="font-semibold">Category</TableHead>
+                    <TableHead data-testid="header-price" className="font-semibold">Price</TableHead>
+                    <TableHead data-testid="header-stock" className="font-semibold">Stock</TableHead>
+                    <TableHead data-testid="header-status" className="font-semibold">Status</TableHead>
+                    <TableHead data-testid="header-actions" className="font-semibold text-right pr-4">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredInventory.map((product: any) => {
-                    const stockQuantity = product.stockQuantity || 0;
-                    const isLowStock = stockQuantity < 10 && stockQuantity > 0;
-                    const isOutOfStock = !product.inStock || stockQuantity === 0;
-                    const rowKey = product.variantColor
-                      ? (product.variantSize
-                          ? `${product._id}_${product.variantIndex}_${product.variantSize}`
-                          : `${product._id}_${product.variantIndex}`)
-                      : product._id;
+                  {groupedInventory.map(({ product, variants }) => {
+                    const isExpanded = expandedProducts.has(product._id);
+                    const totalStock = variants.reduce((sum: number, v: any) => sum + (v.stockQuantity || 0), 0);
+                    const allOutOfStock = variants.every((v: any) => !v.inStock || (v.stockQuantity || 0) === 0);
+                    const someOutOfStock = variants.some((v: any) => !v.inStock || (v.stockQuantity || 0) === 0);
+                    const someLowStock = variants.some((v: any) => (v.stockQuantity || 0) < 10 && (v.stockQuantity || 0) > 0 && v.inStock);
+
+                    const productStatusLabel = allOutOfStock ? "Out of Stock" : someOutOfStock || someLowStock ? "Partially Low" : "In Stock";
+                    const productStatusClass = allOutOfStock
+                      ? "bg-red-100 text-red-700"
+                      : someOutOfStock || someLowStock
+                      ? "bg-orange-100 text-orange-700"
+                      : "bg-green-100 text-green-700";
 
                     return (
-                      <TableRow key={rowKey} data-testid={`row-inventory-${rowKey}`}>
-                        <TableCell className="font-medium" data-testid={`cell-name-${rowKey}`}>
-                          {product.name}
-                        </TableCell>
-                        <TableCell data-testid={`cell-color-${rowKey}`}>
-                          {product.variantColor ? (
-                            <span className="inline-block text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
-                              {product.variantColor}
+                      <React.Fragment key={product._id}>
+                        {/* Parent product row */}
+                        <TableRow
+                          key={product._id}
+                          className="cursor-pointer hover:bg-muted/30 font-medium"
+                          data-testid={`row-product-${product._id}`}
+                          onClick={() => toggleProductExpand(product._id)}
+                        >
+                          <TableCell className="w-10 py-3">
+                            <div className="flex items-center justify-center">
+                              <ChevronRight
+                                className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+                                data-testid={`icon-expand-${product._id}`}
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-3" data-testid={`cell-name-${product._id}`}>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-sm">{product.name}</span>
+                              <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                {variants.length} variant{variants.length !== 1 ? "s" : ""}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-3 text-sm text-muted-foreground" data-testid={`cell-category-${product._id}`}>
+                            {product.category}
+                          </TableCell>
+                          <TableCell className="py-3 text-sm font-medium" data-testid={`cell-price-${product._id}`}>
+                            ₹{product.price}
+                          </TableCell>
+                          <TableCell className="py-3" data-testid={`cell-total-stock-${product._id}`}>
+                            <span className={`font-semibold text-sm ${allOutOfStock ? "text-red-600" : someLowStock ? "text-orange-600" : "text-green-600"}`}>
+                              {totalStock}
                             </span>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell data-testid={`cell-size-${rowKey}`}>
-                          {product.variantSize ? (
-                            <span className="inline-block text-xs bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">
-                              {product.variantSize}
+                          </TableCell>
+                          <TableCell className="py-3" data-testid={`cell-product-status-${product._id}`}>
+                            <span className={`px-2 py-1 rounded-md text-xs font-medium ${productStatusClass}`}>
+                              {productStatusLabel}
                             </span>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell data-testid={`cell-category-${rowKey}`}>
-                          {product.category}
-                        </TableCell>
-                        <TableCell data-testid={`cell-price-${rowKey}`}>
-                          ₹{product.price}
-                        </TableCell>
-                        <TableCell data-testid={`cell-stock-${rowKey}`}>
-                          <span className={
-                            isOutOfStock ? 'text-red-600 font-bold' : 
-                            isLowStock ? 'text-orange-600 font-semibold' : 
-                            'text-green-600'
-                          }>
-                            {stockQuantity}
-                          </span>
-                        </TableCell>
-                        <TableCell data-testid={`cell-status-${product._id}`}>
-                          <span className={`px-2 py-1 rounded-md text-xs ${
-                            isOutOfStock ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 
-                            isLowStock ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' : 
-                            'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                          }`}>
-                            {isOutOfStock ? 'Out of Stock' : isLowStock ? 'Low Stock' : 'In Stock'}
-                          </span>
-                        </TableCell>
-                        <TableCell data-testid={`cell-actions-${product._id}`}>
-                          <div className="flex gap-2 flex-wrap">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEdit(product)}
-                              data-testid={`button-edit-${product._id}`}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-
+                          </TableCell>
+                          <TableCell className="py-3 text-right pr-4" onClick={(e) => e.stopPropagation()} data-testid={`cell-actions-${product._id}`}>
                             <Button
                               variant="destructive"
                               size="sm"
+                              className="h-8 w-8 p-0"
                               onClick={() => setDeleteProductId(product._id)}
                               data-testid={`button-delete-${product._id}`}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Variant sub-rows */}
+                        {isExpanded && variants.map((variant: any) => {
+                          const stockQuantity = variant.stockQuantity || 0;
+                          const isLowStock = stockQuantity < 10 && stockQuantity > 0;
+                          const isOutOfStock = !variant.inStock || stockQuantity === 0;
+                          const variantKey = variant.variantColor
+                            ? (variant.variantSize
+                                ? `${variant._id}_${variant.variantIndex}_${variant.variantSize}`
+                                : `${variant._id}_${variant.variantIndex}`)
+                            : variant._id;
+
+                          return (
+                            <TableRow
+                              key={variantKey}
+                              className="bg-muted/10 hover:bg-muted/25"
+                              data-testid={`row-variant-${variantKey}`}
+                            >
+                              <TableCell className="w-10 py-2.5" />
+                              <TableCell className="py-2.5 pl-8" data-testid={`cell-variant-info-${variantKey}`}>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-muted-foreground text-xs">↳</span>
+                                  {variant.variantColor ? (
+                                    <span className="inline-block text-xs bg-white border border-border text-foreground px-2 py-0.5 rounded-full shadow-sm font-medium">
+                                      {variant.variantColor}
+                                    </span>
+                                  ) : (
+                                    <span className="text-muted-foreground text-xs">Default</span>
+                                  )}
+                                  {variant.variantSize && (
+                                    <span className="inline-block text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full font-medium">
+                                      Size {variant.variantSize}
+                                    </span>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-2.5 text-xs text-muted-foreground">—</TableCell>
+                              <TableCell className="py-2.5 text-xs text-muted-foreground">—</TableCell>
+                              <TableCell className="py-2.5" data-testid={`cell-variant-stock-${variantKey}`}>
+                                <span className={`text-sm font-semibold ${isOutOfStock ? "text-red-600" : isLowStock ? "text-orange-600" : "text-green-600"}`}>
+                                  {stockQuantity}
+                                </span>
+                              </TableCell>
+                              <TableCell className="py-2.5" data-testid={`cell-variant-status-${variantKey}`}>
+                                <span className={`px-2 py-1 rounded-md text-xs font-medium ${
+                                  isOutOfStock ? "bg-red-100 text-red-700" : isLowStock ? "bg-orange-100 text-orange-700" : "bg-green-100 text-green-700"
+                                }`}>
+                                  {isOutOfStock ? "Out of Stock" : isLowStock ? "Low Stock" : "In Stock"}
+                                </span>
+                              </TableCell>
+                              <TableCell className="py-2.5 text-right pr-4" data-testid={`cell-variant-actions-${variantKey}`}>
+                                <div className="flex items-center justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => handleEdit(variant)}
+                                    data-testid={`button-edit-variant-${variantKey}`}
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => setDeleteProductId(variant._id)}
+                                    data-testid={`button-delete-variant-${variantKey}`}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </React.Fragment>
                     );
                   })}
                 </TableBody>
