@@ -43,6 +43,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  Upload,
   User,
   Package
 } from "lucide-react";
@@ -76,13 +77,12 @@ interface Review {
 }
 
 interface AddReviewForm {
-  productId: string;
   customerName: string;
   rating: string;
   title: string;
   comment: string;
   verifiedPurchase: boolean;
-  photos: string;
+  photos: string[];
 }
 
 export default function ReviewManagement() {
@@ -97,14 +97,15 @@ export default function ReviewManagement() {
   const [reviewToDelete, setReviewToDelete] = useState<Review | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [addForm, setAddForm] = useState<AddReviewForm>({
-    productId: "",
     customerName: "",
     rating: "5",
     title: "",
     comment: "",
     verifiedPurchase: false,
-    photos: "",
+    photos: [],
   });
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const limit = 20;
 
   const adminToken = localStorage.getItem("adminToken");
@@ -178,13 +179,6 @@ export default function ReviewManagement() {
     },
   });
 
-  const { data: productsData } = useQuery<any>({
-    queryKey: ["/api/products?limit=200&inStock=false"],
-    enabled: addDialogOpen,
-  });
-
-  const products: any[] = (productsData as any)?.products || [];
-
   const addReviewMutation = useMutation({
     mutationFn: async (data: any) => {
       const res = await fetch("/api/admin/reviews", {
@@ -206,30 +200,57 @@ export default function ReviewManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"], exact: false, refetchType: "all" });
       queryClient.invalidateQueries({ queryKey: ["/api/reviews/homepage"] });
       setAddDialogOpen(false);
-      setAddForm({ productId: "", customerName: "", rating: "5", title: "", comment: "", verifiedPurchase: false, photos: "" });
+      setAddForm({ customerName: "", rating: "5", title: "", comment: "", verifiedPurchase: false, photos: [] });
+      setPhotoFiles([]);
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
-  const handleAddReview = () => {
-    if (!addForm.productId || !addForm.customerName || !addForm.title || !addForm.comment) {
+  const handlePhotoFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []).slice(0, 3);
+    setPhotoFiles(files);
+  };
+
+  const handleAddReview = async () => {
+    if (!addForm.customerName || !addForm.title || !addForm.comment) {
       toast({ title: "Missing fields", description: "Please fill all required fields", variant: "destructive" });
       return;
     }
-    const photosArray = addForm.photos
-      .split(",")
-      .map((u) => u.trim())
-      .filter(Boolean);
+
+    let uploadedPhotos: string[] = [];
+    if (photoFiles.length > 0) {
+      setPhotoUploading(true);
+      try {
+        const uploadPromises = photoFiles.map(async (file) => {
+          const formData = new FormData();
+          formData.append("image", file);
+          const res = await fetch("/api/admin/upload-review-image", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${adminToken}` },
+            body: formData,
+          });
+          if (!res.ok) throw new Error("Image upload failed");
+          const data = await res.json();
+          return data.url as string;
+        });
+        uploadedPhotos = await Promise.all(uploadPromises);
+      } catch (err: any) {
+        toast({ title: "Photo upload failed", description: err.message, variant: "destructive" });
+        setPhotoUploading(false);
+        return;
+      }
+      setPhotoUploading(false);
+    }
+
     addReviewMutation.mutate({
-      productId: addForm.productId,
       customerName: addForm.customerName,
       rating: Number(addForm.rating),
       title: addForm.title,
       comment: addForm.comment,
       verifiedPurchase: addForm.verifiedPurchase,
-      photos: photosArray,
+      photos: uploadedPhotos,
     });
   };
 
@@ -630,7 +651,7 @@ export default function ReviewManagement() {
       </div>
 
       {/* Add Review Dialog */}
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+      <Dialog open={addDialogOpen} onOpenChange={(open) => { setAddDialogOpen(open); if (!open) { setPhotoFiles([]); } }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add Review</DialogTitle>
@@ -639,25 +660,6 @@ export default function ReviewManagement() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="space-y-1">
-              <Label htmlFor="add-product">Product *</Label>
-              <Select
-                value={addForm.productId}
-                onValueChange={(v) => setAddForm((f) => ({ ...f, productId: v }))}
-              >
-                <SelectTrigger id="add-product" data-testid="select-add-product">
-                  <SelectValue placeholder="Select a product" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {products.map((p: any) => (
-                    <SelectItem key={p._id} value={p._id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="space-y-1">
               <Label htmlFor="add-name">Customer Name *</Label>
               <Input
@@ -711,18 +713,44 @@ export default function ReviewManagement() {
               />
             </div>
 
-            <div className="space-y-1">
-              <Label htmlFor="add-photos">Photo URLs (optional)</Label>
-              <Input
-                id="add-photos"
-                placeholder="Paste image URLs separated by commas"
-                value={addForm.photos}
-                onChange={(e) => setAddForm((f) => ({ ...f, photos: e.target.value }))}
-                data-testid="input-add-photos"
+            <div className="space-y-2">
+              <Label>Customer Photos (optional, max 3)</Label>
+              <label
+                htmlFor="add-photos-upload"
+                className="flex items-center gap-2 cursor-pointer w-fit px-4 py-2 bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-200 rounded-md hover:bg-pink-200 dark:hover:bg-pink-800 text-sm"
+              >
+                <Upload className="h-4 w-4" />
+                {photoFiles.length > 0 ? `${photoFiles.length} photo(s) selected` : "Upload Photos"}
+              </label>
+              <input
+                id="add-photos-upload"
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handlePhotoFiles}
+                data-testid="input-add-photos-upload"
               />
-              <p className="text-xs text-muted-foreground">
-                Enter comma-separated image URLs. Use Cloudinary URLs for best results.
-              </p>
+              {photoFiles.length > 0 && (
+                <div className="flex gap-2 flex-wrap mt-2">
+                  {photoFiles.map((file, i) => (
+                    <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-border">
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`preview ${i + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setPhotoFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="absolute top-0.5 right-0.5 w-4 h-4 bg-red-600 text-white rounded-full text-xs flex items-center justify-center"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
@@ -738,15 +766,15 @@ export default function ReviewManagement() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddDialogOpen(false)} data-testid="button-cancel-add">
+            <Button variant="outline" onClick={() => { setAddDialogOpen(false); setPhotoFiles([]); }} data-testid="button-cancel-add">
               Cancel
             </Button>
             <Button
               onClick={handleAddReview}
-              disabled={addReviewMutation.isPending}
+              disabled={addReviewMutation.isPending || photoUploading}
               data-testid="button-submit-add-review"
             >
-              {addReviewMutation.isPending ? "Adding..." : "Add Review"}
+              {photoUploading ? "Uploading photos..." : addReviewMutation.isPending ? "Adding..." : "Add Review"}
             </Button>
           </DialogFooter>
         </DialogContent>

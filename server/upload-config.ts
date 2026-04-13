@@ -1,6 +1,7 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { randomBytes } from "crypto";
 
 // Ensure uploads directory exists (still used for media/hero/video files)
 const uploadsDir = path.join(process.cwd(), 'uploads');
@@ -17,7 +18,6 @@ const storage = multer.diskStorage({
     cb(null, uploadsDir);
   },
   filename: function (req, file, cb) {
-    const { randomBytes } = require('crypto');
     randomBytes(16, (err: Error | null, raw: Buffer) => {
       if (err) return cb(err, '');
       const ext = path.extname(file.originalname).toLowerCase();

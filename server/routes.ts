@@ -3977,17 +3977,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/reviews", authenticateAdmin, async (req, res) => {
     try {
       const { productId, customerName, rating, title, comment, verifiedPurchase, photos } = req.body;
-      if (!productId || !customerName || !rating || !title || !comment) {
-        return res.status(400).json({ error: 'productId, customerName, rating, title, and comment are required' });
+      if (!customerName || !rating || !title || !comment) {
+        return res.status(400).json({ error: 'customerName, rating, title, and comment are required' });
       }
       if (rating < 1 || rating > 5) {
         return res.status(400).json({ error: 'Rating must be between 1 and 5' });
       }
-      const product = await Product.findById(productId);
-      if (!product) return res.status(404).json({ error: 'Product not found' });
 
-      const review = new Review({
-        productId,
+      const reviewData: any = {
         customerName,
         rating: Number(rating),
         title,
@@ -3995,12 +3992,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         verifiedPurchase: !!verifiedPurchase,
         photos: Array.isArray(photos) ? photos : [],
         adminCreated: true,
-      });
+      };
+
+      if (productId) {
+        const product = await Product.findById(productId);
+        if (product) reviewData.productId = productId;
+      }
+
+      const review = new Review(reviewData);
       await review.save();
       res.status(201).json(review);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
+  });
+
+  app.post("/api/admin/upload-review-image", authenticateAdmin, (req, res) => {
+    upload.single("image")(req, res, async (err: any) => {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: err.message });
+      } else if (err) {
+        return res.status(400).json({ error: err.message });
+      }
+      try {
+        if (!req.file) return res.status(400).json({ error: 'No image provided' });
+        const url = await uploadToCloudinary(req.file.buffer, req.file.originalname);
+        res.json({ url });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    });
   });
 
   // Hero Banner Routes

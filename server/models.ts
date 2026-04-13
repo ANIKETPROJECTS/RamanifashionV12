@@ -377,7 +377,7 @@ orderSchema.post('deleteMany', async function() {
 
 // Review Schema
 const reviewSchema = new Schema({
-  productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
+  productId: { type: Schema.Types.ObjectId, ref: 'Product' },
   customerId: { type: Schema.Types.ObjectId, ref: 'Customer' },
   customerName: { type: String, required: true },
   rating: { type: Number, required: true, min: 1, max: 5 },
@@ -423,7 +423,7 @@ async function updateProductRating(productId: any) {
 
 // Review hooks to update product rating
 reviewSchema.post('save', async function(doc) {
-  await updateProductRating(doc.productId);
+  if (doc.productId) await updateProductRating(doc.productId);
 });
 
 reviewSchema.post('findOneAndUpdate', async function(doc) {

@@ -69,6 +69,7 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAllReviews, setShowAllReviews] = useState(false);
   const [ramaniBanner, setRamaniBanner] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const { toast } = useToast();
@@ -927,7 +928,7 @@ export default function Home() {
                 whileInView="visible"
                 viewport={{ once: true, margin: "-100px" }}
               >
-                {customerReviews.map((review, index) => (
+                {(showAllReviews ? customerReviews : customerReviews.slice(0, 4)).map((review, index) => (
                   <motion.div
                     key={index}
                     className="bg-background rounded-xl p-6 shadow-sm border border-border"
@@ -999,6 +1000,18 @@ export default function Home() {
                     </div>
                   </motion.div>
                 ))}
+
+                {customerReviews.length > 4 && (
+                  <div className="flex justify-center pt-2">
+                    <button
+                      onClick={() => setShowAllReviews((prev) => !prev)}
+                      className="px-6 py-2.5 bg-primary text-white rounded-full text-sm font-medium hover:bg-primary/90 transition-colors"
+                      data-testid="button-toggle-reviews"
+                    >
+                      {showAllReviews ? "Show Less" : `View More Reviews (${customerReviews.length - 4} more)`}
+                    </button>
+                  </div>
+                )}
               </motion.div>
             </div>
           </div>
