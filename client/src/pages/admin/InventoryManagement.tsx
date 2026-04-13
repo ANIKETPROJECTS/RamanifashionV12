@@ -38,8 +38,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Search, Pencil, Trash2, Upload, X, Link as LinkIcon, Download, FileUp, CheckCircle, AlertCircle, SkipForward, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, Pencil, Trash2, Upload, X, Link as LinkIcon, Download, FileUp, CheckCircle, AlertCircle, SkipForward, ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ColorVariantEditor, ColorVariant } from "@/components/ColorVariantEditor";
+
+const AVAILABLE_COLORS = [
+  "Red", "Blue", "Green", "Pink", "Yellow", "Black", "White", "Purple",
+  "Maroon", "Grey", "Orange", "Beige", "Brown", "Gold", "Silver",
+  "Navy", "Turquoise", "Magenta", "Cream", "Burgundy", "Peach", "Lavender",
+  "Dark Green", "Dark Blue", "Dark Red", "Teal", "Coral", "Rose",
+];
 
 export default function InventoryManagement() {
   const { toast } = useToast();
@@ -57,6 +65,12 @@ export default function InventoryManagement() {
   const [editingVariantIndex, setEditingVariantIndex] = useState<number>(-1);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
+
+  const [addVariantProductId, setAddVariantProductId] = useState<string | null>(null);
+  const [addVariantProductData, setAddVariantProductData] = useState<any>(null);
+  const [isAddVariantOpen, setIsAddVariantOpen] = useState(false);
+  const [isLoadingAddVariant, setIsLoadingAddVariant] = useState(false);
+  const [addVariantNewVariants, setAddVariantNewVariants] = useState<ColorVariant[]>([]);
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null);
   const [expandedProducts, setExpandedProducts] = useState<Set<string>>(new Set());
   const [editBlouseSizes, setEditBlouseSizes] = useState<Array<{ size: string; stockQuantity: number }>>([]);
@@ -242,6 +256,52 @@ export default function InventoryManagement() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
   });
+
+  const addColorVariantMutation = useMutation({
+    mutationFn: async ({ productId, newVariants }: { productId: string; newVariants: ColorVariant[] }) => {
+      const existingVariants = addVariantProductData?.colorVariants || [];
+      const updatedVariants = [...existingVariants, ...newVariants];
+      const totalStock = updatedVariants.reduce((sum: number, v: any) => sum + (v.stockQuantity || 0), 0);
+      const anyInStock = updatedVariants.some((v: any) => v.inStock);
+      return apiRequest(`/api/admin/products/${productId}`, "PATCH", {
+        colorVariants: updatedVariants,
+        stockQuantity: totalStock,
+        inStock: anyInStock,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "Color variant added successfully!" });
+      setIsAddVariantOpen(false);
+      setAddVariantProductId(null);
+      setAddVariantProductData(null);
+      setAddVariantNewVariants([]);
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const handleOpenAddVariant = async (product: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsLoadingAddVariant(true);
+    setIsAddVariantOpen(true);
+    setAddVariantNewVariants([]);
+    setAddVariantProductId(product._id);
+    try {
+      const response = await fetch(`/api/products/${product._id}`);
+      if (!response.ok) throw new Error("Failed to fetch product");
+      const fullProduct = await response.json();
+      setAddVariantProductData(fullProduct);
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      setIsAddVariantOpen(false);
+      setAddVariantProductId(null);
+    } finally {
+      setIsLoadingAddVariant(false);
+    }
+  };
 
   const handleExport = async () => {
     setIsExporting(true);
@@ -1001,15 +1061,27 @@ export default function InventoryManagement() {
                             </span>
                           </TableCell>
                           <TableCell className="py-3 text-right pr-4" onClick={(e) => e.stopPropagation()} data-testid={`cell-actions-${product._id}`}>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={() => setDeleteProductId(product._id)}
-                              data-testid={`button-delete-${product._id}`}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-pink-600 border-pink-300 hover:bg-pink-50"
+                                onClick={(e) => handleOpenAddVariant(product, e)}
+                                title="Add Color Variant"
+                                data-testid={`button-add-variant-${product._id}`}
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => setDeleteProductId(product._id)}
+                                data-testid={`button-delete-${product._id}`}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
 
@@ -1684,6 +1756,95 @@ export default function InventoryManagement() {
             </div>
           </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAddVariantOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsAddVariantOpen(false);
+          setAddVariantProductId(null);
+          setAddVariantProductData(null);
+          setAddVariantNewVariants([]);
+        }
+      }}>
+        <DialogContent className="max-w-3xl max-h-screen overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle data-testid="text-add-variant-dialog-title">
+              Add Color Variant
+              {addVariantProductData && (
+                <span className="text-muted-foreground font-normal text-base ml-2">
+                  — {addVariantProductData.name}
+                </span>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {isLoadingAddVariant ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-muted-foreground">Loading product...</p>
+              </div>
+            </div>
+          ) : addVariantProductData ? (
+            <div className="space-y-4">
+              {addVariantProductData.colorVariants?.length > 0 && (
+                <div className="rounded-lg border bg-muted/30 p-3">
+                  <p className="text-sm font-medium mb-2">Existing color variants:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {addVariantProductData.colorVariants.map((v: any, i: number) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1.5 text-xs bg-white border border-border rounded-full px-2.5 py-1 shadow-sm"
+                        data-testid={`badge-existing-variant-${i}`}
+                      >
+                        {v.colorHex && (
+                          <span
+                            className="w-3 h-3 rounded-full border border-gray-200 flex-shrink-0"
+                            style={{ backgroundColor: v.colorHex }}
+                          />
+                        )}
+                        {v.color}
+                        <span className="text-muted-foreground">({v.stockQuantity ?? 0} in stock)</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <ColorVariantEditor
+                variants={addVariantNewVariants}
+                onChange={setAddVariantNewVariants}
+                availableColors={AVAILABLE_COLORS}
+                adminToken={adminToken}
+                isBlouse={addVariantProductData.category === "BLOUSES"}
+              />
+              <div className="flex justify-end gap-3 pt-2 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsAddVariantOpen(false);
+                    setAddVariantProductId(null);
+                    setAddVariantProductData(null);
+                    setAddVariantNewVariants([]);
+                  }}
+                  data-testid="button-add-variant-cancel"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  disabled={addVariantNewVariants.length === 0 || addColorVariantMutation.isPending}
+                  onClick={() => {
+                    if (!addVariantProductId || addVariantNewVariants.length === 0) return;
+                    addColorVariantMutation.mutate({ productId: addVariantProductId, newVariants: addVariantNewVariants });
+                  }}
+                  data-testid="button-add-variant-submit"
+                >
+                  {addColorVariantMutation.isPending ? "Saving..." : `Add ${addVariantNewVariants.length > 0 ? addVariantNewVariants.length : ""} Color Variant${addVariantNewVariants.length !== 1 ? "s" : ""}`}
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </DialogContent>
       </Dialog>
 

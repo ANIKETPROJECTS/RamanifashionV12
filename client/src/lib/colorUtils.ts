@@ -49,16 +49,35 @@ export const colorNameToCss: Record<string, string> = {
   'cyan': '#00ffff',
   'lime': '#32cd32',
   'chartreuse': '#7fff00',
+  'dark green': '#006400',
+  'dark blue': '#00008b',
+  'dark red': '#8b0000',
+  'dark pink': '#c71585',
+  'dark purple': '#301934',
+  'light blue': '#add8e6',
+  'light green': '#90ee90',
+  'light pink': '#ffb6c1',
+  'sky blue': '#87ceeb',
+  'royal blue': '#4169e1',
+  'forest green': '#228b22',
+  'emerald green': '#50c878',
+  'bottle green': '#006a4e',
+  'sea green': '#2e8b57',
+  'parrot green': '#50c878',
 };
 
 export function getColorCssValue(colorName: string): string {
   const lowerColor = colorName.toLowerCase().trim();
-  return colorNameToCss[lowerColor] || lowerColor;
+  if (colorNameToCss[lowerColor]) return colorNameToCss[lowerColor];
+  // Try removing spaces for CSS named colors (e.g., "dark green" → "darkgreen")
+  const noSpace = lowerColor.replace(/\s+/g, '');
+  if (colorNameToCss[noSpace]) return colorNameToCss[noSpace];
+  return lowerColor;
 }
 
 export function extractUniqueColorsFromProducts(products: any[]): string[] {
   const colorSet = new Set<string>();
-  
+
   products.forEach(product => {
     if (product.displayColor) {
       colorSet.add(product.displayColor);
@@ -71,10 +90,34 @@ export function extractUniqueColorsFromProducts(products: any[]): string[] {
         }
       });
     }
-    if (product.color) {
-      colorSet.add(product.color);
+  });
+
+  return Array.from(colorSet).sort();
+}
+
+export function extractColorHexMapFromProducts(products: any[]): Record<string, string> {
+  const hexMap: Record<string, string> = {};
+
+  products.forEach(product => {
+    if (product.displayColor) {
+      if (product.displayColorHex && product.displayColorHex.trim()) {
+        hexMap[product.displayColor] = product.displayColorHex;
+      }
+      return;
+    }
+    if (!product.baseProductId && product.colorVariants && Array.isArray(product.colorVariants)) {
+      product.colorVariants.forEach((variant: any) => {
+        if (variant.color && variant.colorHex && variant.colorHex.trim()) {
+          hexMap[variant.color] = variant.colorHex;
+        }
+      });
     }
   });
-  
-  return Array.from(colorSet).sort();
+
+  return hexMap;
+}
+
+export function getSwatchColor(colorName: string, hexMap: Record<string, string>): string {
+  if (hexMap[colorName] && hexMap[colorName].trim()) return hexMap[colorName];
+  return getColorCssValue(colorName);
 }

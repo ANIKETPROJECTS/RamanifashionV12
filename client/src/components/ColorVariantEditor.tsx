@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Link as LinkIcon, Trash2, Edit2, Plus, X } from "lucide-react";
 import { compressImageFile } from "@/lib/compressImage";
+import { colorNameToCss, getColorCssValue } from "@/lib/colorUtils";
 
 export interface BlouseSize {
   size: string;
@@ -419,28 +420,33 @@ export function ColorVariantEditor({ variants, onChange, availableColors, adminT
                 {showColorSuggestions && (
                   <div className="absolute z-50 mt-1 w-full max-h-56 overflow-y-auto rounded-md border bg-background shadow-lg" data-testid="dropdown-color-suggestions">
                     {filteredColors.length > 0 ? (
-                      filteredColors.map((color) => (
-                        <button
-                          key={color}
-                          type="button"
-                          className="w-full px-3 py-2 text-left text-sm hover:bg-accent flex items-center gap-2"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            setSelectedColor(color);
-                            setShowColorSuggestions(false);
-                          }}
-                          data-testid={`option-color-${color.toLowerCase().replace(/\s+/g, '-')}`}
-                        >
-                          <span
-                            className="w-5 h-5 rounded-full border border-gray-200 flex-shrink-0"
-                            style={{ backgroundColor: selectedColorHex }}
-                          />
-                          {color}
-                        </button>
-                      ))
+                      filteredColors.map((color) => {
+                        const cssColor = getColorCssValue(color);
+                        return (
+                          <button
+                            key={color}
+                            type="button"
+                            className="w-full px-3 py-2 text-left text-sm hover:bg-accent flex items-center gap-2"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setSelectedColor(color);
+                              const hex = colorNameToCss[color.toLowerCase().trim()];
+                              if (hex) setSelectedColorHex(hex);
+                              setShowColorSuggestions(false);
+                            }}
+                            data-testid={`option-color-${color.toLowerCase().replace(/\s+/g, '-')}`}
+                          >
+                            <span
+                              className="w-5 h-5 rounded-full border border-gray-200 flex-shrink-0"
+                              style={{ backgroundColor: cssColor }}
+                            />
+                            {color}
+                          </button>
+                        );
+                      })
                     ) : (
                       <div className="px-3 py-2 text-sm text-muted-foreground" data-testid="text-no-color-results">
-                        No saved colors found
+                        No saved colors found. Type a name and set a custom hex color.
                       </div>
                     )}
                     {selectedColor.trim() && !hasExactColorMatch && (
@@ -457,7 +463,7 @@ export function ColorVariantEditor({ variants, onChange, availableColors, adminT
                           className="w-5 h-5 rounded-full border border-gray-200 flex-shrink-0"
                           style={{ backgroundColor: selectedColorHex }}
                         />
-                        Add custom color: "{selectedColor.trim()}"
+                        Use custom color: "{selectedColor.trim()}" with hex {selectedColorHex}
                       </button>
                     )}
                   </div>

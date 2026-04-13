@@ -15,7 +15,7 @@ import { useLocation } from "wouter";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { motion } from "framer-motion";
 import { colorPreferences } from "@/lib/colorPreferences";
-import { extractUniqueColorsFromProducts, getColorCssValue } from "@/lib/colorUtils";
+import { extractUniqueColorsFromProducts, extractColorHexMapFromProducts, getSwatchColor } from "@/lib/colorUtils";
 
 export default function Sale() {
   const [location] = useLocation();
@@ -148,6 +148,8 @@ export default function Sale() {
   const productColors = useMemo(() => {
     return extractUniqueColorsFromProducts(products);
   }, [products]);
+
+  const colorHexMap = useMemo(() => extractColorHexMapFromProducts(products), [products]);
 
   const handleSortChange = (value: string) => {
     if (value === "none") {
@@ -391,7 +393,7 @@ export default function Sale() {
                           className={`w-10 h-10 rounded-full border-2 hover-elevate overflow-visible ${
                             selectedColors.includes(color) ? 'border-primary ring-2 ring-primary ring-offset-1' : 'border-border'
                           }`}
-                          style={{ backgroundColor: getColorCssValue(color) }}
+                          style={{ backgroundColor: getSwatchColor(color, colorHexMap) }}
                           onClick={() => toggleColor(color)}
                           title={color}
                           data-testid={`button-color-${color.toLowerCase().replace(/\s+/g, '-')}`}
