@@ -237,6 +237,19 @@ export default function Footer() {
             </div>
           </div>
         </div>
+
+        <div className="mt-6 pt-4 border-t border-pink-100 text-center text-xs text-muted-foreground">
+          Designed &amp; Developed with 💛 by{" "}
+          <a
+            href="https://www.airavatatechnologies.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary hover:underline transition-colors"
+            data-testid="link-airavata"
+          >
+            Airavata Technologies
+          </a>
+        </div>
       </div>
     </footer>
   );
