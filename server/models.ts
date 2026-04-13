@@ -16,6 +16,7 @@ const productSchema = new Schema({
   colorVariants: {
     type: [{
       color: { type: String, required: true },
+      colorHex: { type: String },
       images: { 
         type: [{ type: String, required: true }],
         validate: {

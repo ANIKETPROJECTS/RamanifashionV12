@@ -9,11 +9,37 @@ import { useState } from "react";
 const categories = ["Silk Sarees", "Cotton Sarees", "Designer Sarees", "Bridal Sarees"];
 const fabrics = ["Silk", "Cotton", "Georgette", "Chiffon", "Net", "Crepe"];
 const occasions = ["Wedding", "Party", "Festival", "Casual", "Office"];
-const colors = ["Red", "Blue", "Green", "Pink", "Yellow", "Black", "White"];
 
-export default function FilterSidebar() {
+const DEFAULT_COLORS: ColorOption[] = [
+  { name: "Red", hex: "#e53e3e" },
+  { name: "Blue", hex: "#3182ce" },
+  { name: "Green", hex: "#38a169" },
+  { name: "Pink", hex: "#ed64a6" },
+  { name: "Yellow", hex: "#d69e2e" },
+  { name: "Black", hex: "#1a202c" },
+  { name: "White", hex: "#f7fafc" },
+  { name: "Maroon", hex: "#7b2d3e" },
+  { name: "Gold", hex: "#b7791f" },
+  { name: "Purple", hex: "#805ad5" },
+  { name: "Orange", hex: "#dd6b20" },
+  { name: "Cream", hex: "#fefcbf" },
+];
+
+export interface ColorOption {
+  name: string;
+  hex: string;
+}
+
+interface FilterSidebarProps {
+  availableColors?: ColorOption[];
+  selectedColors?: string[];
+  onColorToggle?: (colorName: string) => void;
+}
+
+export default function FilterSidebar({ availableColors, selectedColors = [], onColorToggle }: FilterSidebarProps = {}) {
+  const displayColors = availableColors && availableColors.length > 0 ? availableColors : DEFAULT_COLORS;
   const [priceRange, setPriceRange] = useState([0, 10000]);
-  const [openSections, setOpenSections] = useState<string[]>(["categories", "price", "fabric"]);
+  const [openSections, setOpenSections] = useState<string[]>(["categories", "price", "color"]);
 
   const toggleSection = (section: string) => {
     setOpenSections(prev =>
@@ -120,8 +146,7 @@ export default function FilterSidebar() {
         </CollapsibleContent>
       </Collapsible> */}
 
-      {/* HIDDEN - Color Filter (Uncomment to re-enable) */}
-      {/* <Collapsible open={openSections.includes("color")}>
+      <Collapsible open={openSections.includes("color")}>
         <CollapsibleTrigger 
           className="flex items-center justify-between w-full py-2 hover-elevate px-2 rounded-md"
           onClick={() => toggleSection("color")}
@@ -131,19 +156,36 @@ export default function FilterSidebar() {
           <ChevronDown className={`h-4 w-4 transition-transform ${openSections.includes("color") ? "rotate-180" : ""}`} />
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-2">
-          <div className="grid grid-cols-4 gap-2">
-            {colors.map((color) => (
-              <button
-                key={color}
-                className="w-8 h-8 rounded-full border-2 border-border hover-elevate"
-                style={{ backgroundColor: color.toLowerCase() }}
-                title={color}
-                data-testid={`button-color-${color.toLowerCase()}`}
-              />
-            ))}
+          <div className="flex flex-wrap gap-2">
+            {displayColors.map((color) => {
+              const isSelected = selectedColors.includes(color.name);
+              return (
+                <button
+                  key={color.name}
+                  className={`w-8 h-8 rounded-full border-2 transition-all hover-elevate ${isSelected ? "border-pink-500 scale-110 shadow-md" : "border-border"}`}
+                  style={{ backgroundColor: color.hex }}
+                  title={`${color.name} (${color.hex})`}
+                  onClick={() => onColorToggle?.(color.name)}
+                  data-testid={`button-color-${color.name.toLowerCase()}`}
+                />
+              );
+            })}
           </div>
+          {selectedColors.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {selectedColors.map(name => {
+                const c = displayColors.find(d => d.name === name);
+                return (
+                  <span key={name} className="inline-flex items-center gap-1 text-xs bg-muted rounded-full px-2 py-0.5">
+                    {c && <span className="w-2.5 h-2.5 rounded-full border" style={{ backgroundColor: c.hex }} />}
+                    {name}
+                  </span>
+                );
+              })}
+            </div>
+          )}
         </CollapsibleContent>
-      </Collapsible> */}
+      </Collapsible>
     </div>
   );
 }

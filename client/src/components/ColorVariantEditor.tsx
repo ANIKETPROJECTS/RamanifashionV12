@@ -16,6 +16,7 @@ export interface BlouseSize {
 
 export interface ColorVariant {
   color: string;
+  colorHex?: string;
   images: string[];
   stockQuantity: number;
   inStock: boolean;
@@ -38,6 +39,7 @@ export function ColorVariantEditor({ variants, onChange, availableColors, adminT
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([null, null, null, null, null]);
   
   const [selectedColor, setSelectedColor] = useState<string>("");
+  const [selectedColorHex, setSelectedColorHex] = useState<string>("#ff0000");
   const [currentImages, setCurrentImages] = useState<string[]>(["", "", "", "", ""]);
   const [stockQuantity, setStockQuantity] = useState<number>(0);
   const [inStock, setInStock] = useState<boolean>(true);
@@ -227,6 +229,7 @@ export function ColorVariantEditor({ variants, onChange, availableColors, adminT
       const totalStock = blouseSizes.reduce((s, x) => s + (x.stockQuantity || 0), 0);
       const variant: ColorVariant = {
         color: colorName,
+        colorHex: selectedColorHex,
         images: validImages,
         stockQuantity: totalStock,
         inStock: totalStock > 0,
@@ -250,6 +253,7 @@ export function ColorVariantEditor({ variants, onChange, availableColors, adminT
         toast({ title: "Color variant added successfully!" });
       }
       setSelectedColor("");
+      setSelectedColorHex("#ff0000");
       setCurrentImages(["", "", "", "", ""]);
       setBlouseSizes([]);
       setNewSizeInput("");
@@ -283,7 +287,8 @@ export function ColorVariantEditor({ variants, onChange, availableColors, adminT
     if (editingIndex !== null) {
       const updatedVariants = [...variants];
       updatedVariants[editingIndex] = { 
-        color: colorName, 
+        color: colorName,
+        colorHex: selectedColorHex,
         images: validImages,
         stockQuantity: stockQuantity,
         inStock: finalInStock,
@@ -304,7 +309,8 @@ export function ColorVariantEditor({ variants, onChange, availableColors, adminT
         return;
       }
       onChange([...variants, { 
-        color: colorName, 
+        color: colorName,
+        colorHex: selectedColorHex,
         images: validImages,
         stockQuantity: stockQuantity,
         inStock: finalInStock,
@@ -316,6 +322,7 @@ export function ColorVariantEditor({ variants, onChange, availableColors, adminT
     }
 
     setSelectedColor("");
+    setSelectedColorHex("#ff0000");
     setCurrentImages(["", "", "", "", ""]);
     setStockQuantity(0);
     setInStock(true);
@@ -328,6 +335,7 @@ export function ColorVariantEditor({ variants, onChange, availableColors, adminT
   const handleEditVariant = (index: number) => {
     const variant = variants[index];
     setSelectedColor(variant.color);
+    setSelectedColorHex(variant.colorHex || "#ff0000");
     const paddedImages = [...variant.images];
     while (paddedImages.length < 5) {
       paddedImages.push("");
@@ -353,6 +361,7 @@ export function ColorVariantEditor({ variants, onChange, availableColors, adminT
 
   const handleCancelEdit = () => {
     setSelectedColor("");
+    setSelectedColorHex("#ff0000");
     setCurrentImages(["", "", "", "", ""]);
     setStockQuantity(0);
     setInStock(true);
@@ -392,58 +401,79 @@ export function ColorVariantEditor({ variants, onChange, availableColors, adminT
             <Label htmlFor="color-select" data-testid="label-color-select">
               Color *
             </Label>
-            <div className="relative">
-              <Input
-                id="color-select"
-                value={selectedColor}
-                onChange={(e) => {
-                  setSelectedColor(e.target.value);
-                  setShowColorSuggestions(true);
-                }}
-                onFocus={() => setShowColorSuggestions(true)}
-                onBlur={() => setTimeout(() => setShowColorSuggestions(false), 120)}
-                placeholder="Search or type a custom color name"
-                autoComplete="off"
-                data-testid="input-color-search"
-              />
-              {showColorSuggestions && (
-                <div className="absolute z-50 mt-1 w-full max-h-56 overflow-y-auto rounded-md border bg-background shadow-lg" data-testid="dropdown-color-suggestions">
-                  {filteredColors.length > 0 ? (
-                    filteredColors.map((color) => (
+            <div className="flex gap-2 items-start">
+              <div className="relative flex-1">
+                <Input
+                  id="color-select"
+                  value={selectedColor}
+                  onChange={(e) => {
+                    setSelectedColor(e.target.value);
+                    setShowColorSuggestions(true);
+                  }}
+                  onFocus={() => setShowColorSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowColorSuggestions(false), 120)}
+                  placeholder="Search or type a custom color name"
+                  autoComplete="off"
+                  data-testid="input-color-search"
+                />
+                {showColorSuggestions && (
+                  <div className="absolute z-50 mt-1 w-full max-h-56 overflow-y-auto rounded-md border bg-background shadow-lg" data-testid="dropdown-color-suggestions">
+                    {filteredColors.length > 0 ? (
+                      filteredColors.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-accent flex items-center gap-2"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setSelectedColor(color);
+                            setShowColorSuggestions(false);
+                          }}
+                          data-testid={`option-color-${color.toLowerCase().replace(/\s+/g, '-')}`}
+                        >
+                          <span
+                            className="w-5 h-5 rounded-full border border-gray-200 flex-shrink-0"
+                            style={{ backgroundColor: selectedColorHex }}
+                          />
+                          {color}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-muted-foreground" data-testid="text-no-color-results">
+                        No saved colors found
+                      </div>
+                    )}
+                    {selectedColor.trim() && !hasExactColorMatch && (
                       <button
-                        key={color}
                         type="button"
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-accent"
+                        className="w-full border-t px-3 py-2 text-left text-sm font-medium text-pink-600 hover:bg-pink-50 flex items-center gap-2"
                         onMouseDown={(e) => {
                           e.preventDefault();
-                          setSelectedColor(color);
                           setShowColorSuggestions(false);
                         }}
-                        data-testid={`option-color-${color.toLowerCase().replace(/\s+/g, '-')}`}
+                        data-testid="option-use-custom-color"
                       >
-                        {color}
+                        <span
+                          className="w-5 h-5 rounded-full border border-gray-200 flex-shrink-0"
+                          style={{ backgroundColor: selectedColorHex }}
+                        />
+                        Add custom color: "{selectedColor.trim()}"
                       </button>
-                    ))
-                  ) : (
-                    <div className="px-3 py-2 text-sm text-muted-foreground" data-testid="text-no-color-results">
-                      No saved colors found
-                    </div>
-                  )}
-                  {selectedColor.trim() && !hasExactColorMatch && (
-                    <button
-                      type="button"
-                      className="w-full border-t px-3 py-2 text-left text-sm font-medium text-pink-600 hover:bg-pink-50"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        setShowColorSuggestions(false);
-                      }}
-                      data-testid="option-use-custom-color"
-                    >
-                      Use custom color: {selectedColor.trim()}
-                    </button>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <input
+                  type="color"
+                  value={selectedColorHex}
+                  onChange={(e) => setSelectedColorHex(e.target.value)}
+                  className="h-10 w-12 cursor-pointer rounded border border-input p-0.5"
+                  title="Pick hex color for this variant"
+                  data-testid="input-color-hex"
+                />
+                <span className="text-[10px] text-muted-foreground font-mono">{selectedColorHex}</span>
+              </div>
             </div>
           </div>
 
@@ -718,7 +748,19 @@ export function ColorVariantEditor({ variants, onChange, availableColors, adminT
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Badge data-testid={`badge-color-${index}`}>{variant.color}</Badge>
+                          <div className="flex items-center gap-1.5">
+                            {variant.colorHex && (
+                              <span
+                                className="w-5 h-5 rounded-full border border-gray-300 flex-shrink-0 shadow-sm"
+                                style={{ backgroundColor: variant.colorHex }}
+                                title={variant.colorHex}
+                              />
+                            )}
+                            <Badge data-testid={`badge-color-${index}`}>{variant.color}</Badge>
+                            {variant.colorHex && (
+                              <span className="text-xs text-muted-foreground font-mono">{variant.colorHex}</span>
+                            )}
+                          </div>
                           <span className="text-sm text-muted-foreground">
                             {variant.images.length} image{variant.images.length !== 1 ? 's' : ''}
                           </span>

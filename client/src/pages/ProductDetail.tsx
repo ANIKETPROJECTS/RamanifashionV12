@@ -14,13 +14,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Star,
   Heart,
   ShoppingBag,
@@ -43,7 +36,6 @@ export default function ProductDetail() {
   const { openLogin } = useAuthUI();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [similarSort, setSimilarSort] = useState("rating-desc");
   const [selectedBlouseSize, setSelectedBlouseSize] = useState<string | null>(null);
   const [isZooming, setIsZooming] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
@@ -140,12 +132,11 @@ export default function ProductDetail() {
   }, [wishlistData, baseProductId, token, wishlistOverride, currentVariantColor]);
 
   const { data: similarProducts } = useQuery({
-    queryKey: ["/api/products", "similar", product?.category, id, similarSort],
+    queryKey: ["/api/products", "similar", product?.category, id],
     queryFn: async () => {
       if (!product?.category) return [];
-      const [sortField, sortOrder] = similarSort.split("-");
       const response = await fetch(
-        `/api/products?category=${encodeURIComponent(product.category)}&sort=${sortField}&order=${sortOrder}&limit=8`,
+        `/api/products?category=${encodeURIComponent(product.category)}&limit=8`,
       );
       if (!response.ok) return [];
       const data = await response.json();
@@ -979,23 +970,6 @@ export default function ProductDetail() {
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Similar Products</h2>
-              <Select value={similarSort} onValueChange={setSimilarSort}>
-                <SelectTrigger
-                  className="w-48"
-                  data-testid="select-similar-sort"
-                >
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="rating-desc">Highest Rated</SelectItem>
-                  <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                  <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                  <SelectItem value="reviewCount-desc">
-                    Most Reviewed
-                  </SelectItem>
-                  <SelectItem value="createdAt-desc">Newest First</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <motion.div
               className="grid grid-cols-2 lg:grid-cols-4 gap-6"
@@ -1029,10 +1003,13 @@ export default function ProductDetail() {
                       similarProduct.images?.[0] ||
                       "/default-saree.jpg"
                     }
+                    secondaryImage={similarProduct.displayImages?.[1] || similarProduct.images?.[1]}
                     rating={similarProduct.rating}
                     reviewCount={similarProduct.reviewCount}
                     isNew={similarProduct.isNew}
                     isBestseller={similarProduct.isBestseller}
+                    shortDescription={similarProduct.shortDescription}
+                    description={similarProduct.description}
                   />
                 </motion.div>
               ))}
