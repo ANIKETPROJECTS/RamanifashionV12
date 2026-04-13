@@ -238,7 +238,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-6 pt-4 border-t border-pink-100 text-center text-xs text-muted-foreground">
+        <div className="mt-6 pt-4 border-t border-pink-100 text-center text-sm text-muted-foreground">
           Designed &amp; Developed with 💛 by{" "}
           <a
             href="https://www.airavatatechnologies.com/"
