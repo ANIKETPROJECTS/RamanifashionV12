@@ -104,7 +104,7 @@ export default function Home() {
     queryKey: ["/api/products?isBestseller=true&limit=6&inStock=false"],
   });
 
-  const { data: categoriesData } = useQuery<any[]>({
+  const { data: categoriesData, isLoading: categoriesLoading } = useQuery<any[]>({
     queryKey: ["/api/categories"],
   });
 
@@ -364,6 +364,13 @@ export default function Home() {
                 Shop by Category
               </h2>
             </motion.div>
+            {categoriesLoading ? (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                {Array(4).fill(null).map((_, i) => (
+                  <div key={i} className="rounded-2xl bg-pink-200 animate-pulse aspect-[3/4]" />
+                ))}
+              </div>
+            ) : (
             <motion.div
               className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
               variants={staggerContainer}
@@ -403,6 +410,7 @@ export default function Home() {
                 </motion.div>
               ))}
             </motion.div>
+            )}
           </div>
         </motion.section>
 
