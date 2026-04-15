@@ -92,15 +92,15 @@ export default function Home() {
       .catch(() => {});
   }, []);
 
-  const { data: newArrivalsData } = useQuery({
+  const { data: newArrivalsData, isLoading: newArrivalsLoading } = useQuery({
     queryKey: ["/api/products?isNew=true&limit=6&inStock=false"],
   });
 
-  const { data: trendingData } = useQuery({
+  const { data: trendingData, isLoading: trendingLoading } = useQuery({
     queryKey: ["/api/products?isTrending=true&limit=6&inStock=false"],
   });
 
-  const { data: bestsellerData } = useQuery({
+  const { data: bestsellerData, isLoading: bestsellerLoading } = useQuery({
     queryKey: ["/api/products?isBestseller=true&limit=6&inStock=false"],
   });
 
@@ -108,8 +108,9 @@ export default function Home() {
     queryKey: ["/api/categories"],
   });
 
-  const { data: homeCirclesData } = useQuery<any>({
+  const { data: homeCirclesData, isLoading: circlesLoading } = useQuery<any>({
     queryKey: ["/api/home-circles"],
+    staleTime: 60000,
   });
 
   const newArrivals = (newArrivalsData as any)?.products || [];
@@ -179,28 +180,16 @@ export default function Home() {
   };
 
   const adminHomeCircles: any[] = homeCirclesData?.homeCircles || [];
-  const defaultCircleNames = [
-    "Jamdani Paithani",
-    "Khun / Irkal (Ilkal)",
-    "Ajrakh Modal",
-    "Mul Mul Cotton",
-    "Khadi Cotton",
-    "Patch Work",
-    "Pure Linen",
-    "Sale",
-  ];
 
-  const newCategories = adminHomeCircles.length > 0
-    ? adminHomeCircles
+  // Only show circles after data is loaded — never fall back to hardcoded defaults
+  const newCategories = circlesLoading
+    ? []
+    : adminHomeCircles
         .sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0))
         .map((circle: any) => ({
           name: circle.name,
           image: circle.image || subCategoryImageMap.get(circle.name) || staticFallbacks[circle.name] || "",
-        }))
-    : defaultCircleNames.map((name) => ({
-        name,
-        image: subCategoryImageMap.get(name) || staticFallbacks[name] || "",
-      }));
+        }));
 
   const collections = [
     {
@@ -450,6 +439,13 @@ export default function Home() {
               </button>
             </motion.div>
             {/* Mobile: 2 columns × 3 rows grid — always 6 slots */}
+            {newArrivalsLoading ? (
+              <div className="grid grid-cols-2 gap-4 md:hidden">
+                {Array(6).fill(null).map((_, i) => (
+                  <div key={i} className="rounded-xl bg-pink-100 animate-pulse h-72" />
+                ))}
+              </div>
+            ) : (
             <motion.div
               className="grid grid-cols-2 gap-4 md:hidden"
               variants={staggerContainer}
@@ -491,7 +487,15 @@ export default function Home() {
                 )
               )}
             </motion.div>
+            )}
             {/* Desktop: horizontally scrollable cards — fixed card width, no stretching */}
+            {newArrivalsLoading ? (
+              <div className="hidden md:flex overflow-x-auto gap-4 pb-3 scrollbar-hide">
+                {Array(6).fill(null).map((_, i) => (
+                  <div key={i} className="flex-shrink-0 w-[220px] lg:w-[240px] rounded-xl bg-pink-100 animate-pulse h-80" />
+                ))}
+              </div>
+            ) : (
             <motion.div
               className="hidden md:flex overflow-x-auto gap-4 pb-3 scrollbar-hide"
               variants={staggerContainer}
@@ -530,6 +534,7 @@ export default function Home() {
                 </motion.div>
               ))}
             </motion.div>
+            )}
             <div className="flex sm:hidden justify-center mt-6">
               <button
                 onClick={() => setLocation("/new-arrivals")}
@@ -593,6 +598,13 @@ export default function Home() {
               </button>
             </motion.div>
             {/* Mobile: 2 columns × 3 rows grid — always 6 slots */}
+            {trendingLoading ? (
+              <div className="grid grid-cols-2 gap-4 md:hidden">
+                {Array(6).fill(null).map((_, i) => (
+                  <div key={i} className="rounded-xl bg-pink-100 animate-pulse h-72" />
+                ))}
+              </div>
+            ) : (
             <motion.div
               className="grid grid-cols-2 gap-4 md:hidden"
               variants={staggerContainer}
@@ -633,7 +645,15 @@ export default function Home() {
                 )
               )}
             </motion.div>
+            )}
             {/* Desktop: horizontally scrollable cards — fixed card width, no stretching */}
+            {trendingLoading ? (
+              <div className="hidden md:flex overflow-x-auto gap-4 pb-3 scrollbar-hide">
+                {Array(6).fill(null).map((_, i) => (
+                  <div key={i} className="flex-shrink-0 w-[220px] lg:w-[240px] rounded-xl bg-pink-100 animate-pulse h-80" />
+                ))}
+              </div>
+            ) : (
             <motion.div
               className="hidden md:flex overflow-x-auto gap-4 pb-3 scrollbar-hide"
               variants={staggerContainer}
@@ -671,6 +691,7 @@ export default function Home() {
                 </motion.div>
               ))}
             </motion.div>
+            )}
             <div className="flex sm:hidden justify-center mt-6">
               <button
                 onClick={() => setLocation("/trending-collection")}
@@ -743,6 +764,13 @@ export default function Home() {
                 </button>
               </motion.div>
               {/* Mobile: 2 columns × 3 rows grid */}
+              {bestsellerLoading ? (
+                <div className="grid grid-cols-2 gap-4 md:hidden">
+                  {Array(6).fill(null).map((_, i) => (
+                    <div key={i} className="rounded-xl bg-pink-100 animate-pulse h-72" />
+                  ))}
+                </div>
+              ) : (
               <motion.div
                 className="grid grid-cols-2 gap-4 md:hidden"
                 variants={staggerContainer}
@@ -783,7 +811,15 @@ export default function Home() {
                   )
                 )}
               </motion.div>
+              )}
               {/* Desktop: horizontally scrollable cards */}
+              {bestsellerLoading ? (
+                <div className="hidden md:flex overflow-x-auto gap-4 pb-3 scrollbar-hide">
+                  {Array(6).fill(null).map((_, i) => (
+                    <div key={i} className="flex-shrink-0 w-[220px] lg:w-[240px] rounded-xl bg-pink-100 animate-pulse h-80" />
+                  ))}
+                </div>
+              ) : (
               <motion.div
                 className="hidden md:flex overflow-x-auto gap-4 pb-3 scrollbar-hide"
                 variants={staggerContainer}
@@ -821,6 +857,7 @@ export default function Home() {
                   </motion.div>
                 ))}
               </motion.div>
+              )}
               <div className="flex sm:hidden justify-center mt-6">
                 <button
                   onClick={() => setLocation("/bestseller")}
