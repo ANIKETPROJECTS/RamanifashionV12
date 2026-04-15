@@ -37,6 +37,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import logoImage from "@assets/PNG__B_ LOGO_1762442171742.png";
+import AnnouncementBar from "@/components/AnnouncementBar";
 
 interface HeaderProps {
   cartCount?: number;
@@ -355,6 +356,7 @@ export default function Header({ cartCount = 0, wishlistCount = 0, onMenuClick }
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white">
+      <AnnouncementBar />
       <div className="max-w-7xl mx-auto px-4 py-2">
         <div className="flex items-center justify-between gap-4">
           {/* Left section - Mobile menu and Logo */}

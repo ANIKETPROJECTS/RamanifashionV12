@@ -477,7 +477,16 @@ const categorySchema = new Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
+// Announcement Bar Schema
+const announcementBarSchema = new Schema({
+  text: { type: String, required: true },
+  isActive: { type: Boolean, default: true },
+  order: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+});
+
 // Export models
+export const AnnouncementBar = mongoose.models.AnnouncementBar || mongoose.model('AnnouncementBar', announcementBarSchema);
 export const AdminUser = mongoose.models.AdminUser || mongoose.model('AdminUser', adminUserSchema);
 export const Category = mongoose.models.Category || mongoose.model('Category', categorySchema);
 export const Product = mongoose.models.Product || mongoose.model('Product', productSchema);

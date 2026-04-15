@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { connectDB } from "./db";
-import { Product, User, Customer, Cart, Wishlist, Order, Address, ContactSubmission, OTP, Review, HeroBanner, Settings, AdminUser, Category } from "./models";
+import { Product, User, Customer, Cart, Wishlist, Order, Address, ContactSubmission, OTP, Review, HeroBanner, Settings, AdminUser, Category, AnnouncementBar } from "./models";
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -4097,6 +4097,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filePath = `public/media/hero-banners/${banner.filename}`;
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Announcement Bar Routes
+  app.get("/api/announcement-bar", async (req, res) => {
+    try {
+      const items = await AnnouncementBar.find({ isActive: true }).sort({ order: 1, createdAt: 1 });
+      res.json(items);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/admin/announcement-bar", authenticateAdmin, async (req, res) => {
+    try {
+      const items = await AnnouncementBar.find().sort({ order: 1, createdAt: 1 });
+      res.json(items);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/announcement-bar", authenticateAdmin, async (req, res) => {
+    try {
+      const { text, isActive, order } = req.body;
+      if (!text || !text.trim()) return res.status(400).json({ error: "Text is required" });
+      const item = await AnnouncementBar.create({ text: text.trim(), isActive: isActive !== false, order: order ?? 0 });
+      res.status(201).json(item);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.put("/api/admin/announcement-bar/:id", authenticateAdmin, async (req, res) => {
+    try {
+      const { text, isActive, order } = req.body;
+      const item = await AnnouncementBar.findByIdAndUpdate(
+        req.params.id,
+        { text: text?.trim(), isActive, order },
+        { new: true }
+      );
+      if (!item) return res.status(404).json({ error: "Not found" });
+      res.json(item);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/admin/announcement-bar/:id", authenticateAdmin, async (req, res) => {
+    try {
+      await AnnouncementBar.findByIdAndDelete(req.params.id);
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
