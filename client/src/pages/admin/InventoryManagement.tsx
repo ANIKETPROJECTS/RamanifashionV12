@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from "react";
-import { compressImageFile } from "@/lib/compressImage";
+
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import AdminLayout from "@/components/AdminLayout";
@@ -161,8 +161,9 @@ export default function InventoryManagement() {
     const formData = new FormData();
     
     for (let i = 0; i < files.length; i++) {
-      const compressed = await compressImageFile(files[i]);
-      formData.append('images', compressed);
+      const file = files[i];
+      console.log(`[Upload] File: ${file.name} | Size: ${(file.size / 1024 / 1024).toFixed(2)} MB (${(file.size / 1024).toFixed(1)} KB) | Type: ${file.type}`);
+      formData.append('images', file);
     }
 
     try {

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X } from "lucide-react";
-import { compressImageFile } from "@/lib/compressImage";
+
 
 export interface JewelleryImagesState {
   images: string[];
@@ -33,9 +33,9 @@ export function JewelleryImagesEditor({ value, onChange, adminToken }: Jewellery
     updateUploading(newUploading);
 
     try {
-      const compressed = await compressImageFile(file);
+      console.log(`[Upload] File: ${file.name} | Size: ${(file.size / 1024 / 1024).toFixed(2)} MB | Type: ${file.type}`);
       const formData = new FormData();
-      formData.append("images", compressed);
+      formData.append("images", file);
 
       const response = await fetch("/api/admin/upload-images", {
         method: "POST",

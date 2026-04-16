@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, Link as LinkIcon, Trash2, Edit2, Plus, X } from "lucide-react";
-import { compressImageFile } from "@/lib/compressImage";
+
 import { colorNameToCss, getColorCssValue } from "@/lib/colorUtils";
 
 export interface BlouseSize {
@@ -137,9 +137,9 @@ export const ColorVariantEditor = forwardRef<ColorVariantEditorHandle, ColorVari
       return newState;
     });
 
-    const compressed = await compressImageFile(file);
+    console.log(`[Upload] File: ${file.name} | Size: ${(file.size / 1024 / 1024).toFixed(2)} MB | Type: ${file.type}`);
     const formData = new FormData();
-    formData.append('images', compressed);
+    formData.append('images', file);
 
     try {
       const response = await fetch('/api/admin/upload-images', {

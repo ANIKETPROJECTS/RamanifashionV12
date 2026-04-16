@@ -22,7 +22,10 @@ export async function uploadToCloudinary(
   originalName: string,
 ): Promise<string> {
   configureCloudinary();
-  console.log(`[Cloudinary] Uploading original image: ${originalName} (${(buffer.length / 1024 / 1024).toFixed(2)} MB) — no compression applied`);
+
+  const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
+  const sizeKB = (buffer.length / 1024).toFixed(1);
+  console.log(`[Cloudinary] Uploading: ${originalName} — size received by server: ${sizeMB} MB (${sizeKB} KB) — NO compression applied`);
 
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
@@ -32,8 +35,6 @@ export async function uploadToCloudinary(
         use_filename: false,
         unique_filename: true,
         overwrite: false,
-        quality: 100,
-        flags: "preserve_transparency",
       },
       (error, result) => {
         if (error) {
@@ -43,7 +44,7 @@ export async function uploadToCloudinary(
         if (!result) {
           return reject(new Error("No result from Cloudinary upload"));
         }
-        console.log(`[Cloudinary] Uploaded successfully at full quality: ${result.secure_url}`);
+        console.log(`[Cloudinary] SUCCESS — stored at: ${result.secure_url} | format: ${result.format} | dimensions: ${result.width}x${result.height} | bytes: ${result.bytes}`);
         resolve(result.secure_url);
       },
     );
