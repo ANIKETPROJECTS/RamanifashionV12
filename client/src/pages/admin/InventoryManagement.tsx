@@ -183,6 +183,11 @@ export default function InventoryManagement() {
         throw new Error(errMsg);
       }
 
+      if (data.debug) {
+        data.debug.forEach((d: any, i: number) => {
+          console.log(`[Upload] Server received file ${i+1}: ${d.receivedMB} MB (${(d.receivedBytes/1024).toFixed(1)} KB)`);
+        });
+      }
       console.log('[Upload] Success:', data.urls);
       setUploadedImages([...uploadedImages, ...data.urls]);
       toast({ title: "Images uploaded successfully!" });

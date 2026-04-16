@@ -2228,14 +2228,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const files = req.files as Express.Multer.File[];
 
       try {
-        const uploadPromises = files.map(file =>
-          uploadToCloudinary(file.buffer, file.originalname)
+        const uploadResults = await Promise.all(
+          files.map(async (file) => {
+            const receivedKB = (file.buffer.length / 1024).toFixed(1);
+            const receivedMB = (file.buffer.length / 1024 / 1024).toFixed(2);
+            console.log(`[Upload] Server received: ${file.originalname} — ${receivedMB} MB (${receivedKB} KB) — mimetype: ${file.mimetype}`);
+            const url = await uploadToCloudinary(file.buffer, file.originalname);
+            return { url, receivedBytes: file.buffer.length, receivedMB: parseFloat(receivedMB) };
+          })
         );
-        const cloudinaryUrls = await Promise.all(uploadPromises);
 
         res.json({
           success: true,
-          urls: cloudinaryUrls,
+          urls: uploadResults.map(r => r.url),
+          debug: uploadResults.map(r => ({ receivedBytes: r.receivedBytes, receivedMB: r.receivedMB })),
           message: `${files.length} file(s) uploaded successfully`
         });
       } catch (uploadError: any) {
