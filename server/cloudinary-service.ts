@@ -1,5 +1,4 @@
 import { v2 as cloudinary } from "cloudinary";
-import sharp from "sharp";
 
 function configureCloudinary() {
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
@@ -18,30 +17,12 @@ function configureCloudinary() {
   cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
 }
 
-async function compressImage(buffer: Buffer): Promise<Buffer> {
-  const image = sharp(buffer);
-  const metadata = await image.metadata();
-
-  return image
-    .resize({
-      width: 1200,
-      height: 1600,
-      fit: "inside",
-      withoutEnlargement: true,
-    })
-    .jpeg({ quality: 82, progressive: true })
-    .toBuffer();
-}
-
 export async function uploadToCloudinary(
   buffer: Buffer,
   originalName: string,
 ): Promise<string> {
   configureCloudinary();
-  console.log(`[Cloudinary] Compressing image: ${originalName} (${(buffer.length / 1024 / 1024).toFixed(2)} MB)`);
-
-  const compressed = await compressImage(buffer);
-  console.log(`[Cloudinary] Compressed to: ${(compressed.length / 1024 / 1024).toFixed(2)} MB`);
+  console.log(`[Cloudinary] Uploading original image: ${originalName} (${(buffer.length / 1024 / 1024).toFixed(2)} MB) — no compression applied`);
 
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
@@ -51,6 +32,8 @@ export async function uploadToCloudinary(
         use_filename: false,
         unique_filename: true,
         overwrite: false,
+        quality: 100,
+        flags: "preserve_transparency",
       },
       (error, result) => {
         if (error) {
@@ -60,11 +43,11 @@ export async function uploadToCloudinary(
         if (!result) {
           return reject(new Error("No result from Cloudinary upload"));
         }
-        console.log(`[Cloudinary] Uploaded successfully: ${result.secure_url}`);
+        console.log(`[Cloudinary] Uploaded successfully at full quality: ${result.secure_url}`);
         resolve(result.secure_url);
       },
     );
-    uploadStream.end(compressed);
+    uploadStream.end(buffer);
   });
 }
 
